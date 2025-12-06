@@ -17,20 +17,23 @@ Gemini 3 Pro is Google's most advanced reasoning model. It's multimodal (text, i
 **Getting Access:**
 
 1. **Set up your Google Cloud billing account**
+
    - Go to [Google AI Studio](https://aistudio.google.com) or [Vertex AI](https://console.cloud.google.com/vertex-ai)
    - Create or link a Google Cloud project
    - Enable billing (credit card required)
-   
+
 2. **Apply your $100 GCP credit**
    - Each team receives $100 in GCP credits
    - Credits will be distributed at the start of the hackathon
    - This covers approximately 745 2K images or 416 4K images
 
 **Pricing:**
+
 - 2K image: $0.134 each
 - 4K image: $0.24 each
 
 **Resources:**
+
 - [Nano Banana Pro Documentation](https://ai.google.dev/gemini-api/docs/image-generation)
 - [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
 - [Google Cloud Billing Setup](https://docs.cloud.google.com/billing/docs/how-to/create-billing-account)
@@ -85,35 +88,44 @@ You might make one of these more interesting by:
 **Delete the challenge brief above and fill out the sections below:**
 
 ### Team Name
-[Your team name]
+
+Jumbos
 
 ### Team Members
-- [Name 1]
-- [Name 2]
-- [etc.]
+
+- Tika Capon
+- Winston Hsiao
+- Sean
+- Steven
 
 ### Demo
+
 - **Live URL:** [your-app.vercel.app or similar]
 - **Demo Video:** [YouTube/Loom link if applicable]
 
 ### What We Built
+
 [2-3 sentence description of your tool and what problem it solves]
 
 ### How It Works
+
 [Brief explanation of your architecture and how you're using Nano Banana Pro and Gemini 3 Pro]
 
 ### Key Features
+
 - [Feature 1]
 - [Feature 2]
 - [Feature 3]
 
 ### Tech Stack
+
 - **Frontend:** [e.g., Next.js, React, etc.]
 - **Backend:** [e.g., Node.js, Python, etc.]
 - **Models:** Nano Banana Pro, Gemini 3 Pro
 - **Other:** [any other notable tech]
 
 ### Setup Instructions
+
 ```bash
 # How to run your project locally
 npm install
@@ -121,10 +133,50 @@ npm run dev
 ```
 
 ### Screenshots
+
 [Add 2-3 screenshots of your app in action]
 
 ### Challenges We Faced
+
 [What was hard? What did you learn?]
 
 ### What's Next
+
 [If you had more time, what would you add?]
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
