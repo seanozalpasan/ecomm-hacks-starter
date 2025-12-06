@@ -42,10 +42,8 @@ export async function POST(request: NextRequest) {
 
 		const email =
 			typeof sessionClaims === "object" && sessionClaims
-				? // @ts-expect-error sessionClaims may not have email depending on Clerk config
-					(sessionClaims.email ??
-					// @ts-expect-error
-					sessionClaims.email_address ??
+				? ((sessionClaims as any).email ??
+					(sessionClaims as any).email_address ??
 					"")
 				: "";
 

@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { basicsInputSchema } from "@/schemas/onboarding/basics";
-import { saveBasics } from "@/services/onboarding/basics";
+import { createGameSchema } from "@/schemas/games/create";
+import { createGame } from "@/services/games/create";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
 		}
 
 		const body = await request.json();
-		const validatedData = basicsInputSchema.parse(body);
-		const result = await saveBasics(validatedData);
+		const validatedData = createGameSchema.parse(body);
+		const result = await createGame(validatedData, userId);
 
 		return NextResponse.json(
 			{
 				success: true,
-				data: result.data,
+				data: result,
 				message: result.message,
 			},
 			{ status: 200 },
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json(
 			{
 				success: false,
-				error: "Internal server error",
+				error:
+					error instanceof Error ? error.message : "Internal server error",
 			},
 			{ status: 500 },
 		);
