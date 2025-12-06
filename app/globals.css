@@ -181,3 +181,93 @@ input[type="range"].price-slider:focus::-webkit-slider-thumb {
 input[type="range"].price-slider:focus::-moz-range-thumb {
   box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
 }
+
+/* Christmas Loading Animations */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes shimmer-slow {
+  0% {
+    background-position: 200% 200%;
+  }
+  100% {
+    background-position: -200% -200%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(20px) translateX(10px);
+    opacity: 0.3;
+  }
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-shimmer-slow {
+  animation: shimmer-slow 3s infinite linear;
+}
+
+.animate-float {
+  animation: float 3s infinite ease-in-out;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1.5s linear infinite;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer,
+  .animate-shimmer-slow,
+  .animate-float,
+  .animate-spin-reverse {
+    animation: none;
+  }
+
+  /* Provide subtle reduced motion alternative */
+  .animate-shimmer,
+  .animate-shimmer-slow {
+    opacity: 0.8;
+  }
+}

@@ -10,6 +10,7 @@ import { ProductCardList } from "@/components/product-card-list";
 import { type GiftSearchInput, giftSearchInputSchema } from "@/schemas/gifts";
 import { searchGifts, type ProductResult } from "@/lib/api/searchGifts";
 import { users } from "@/lib/db/schema";
+import { ChristmasLoadingSkeleton } from "@/components/christmas-loading-skeleton";
 
 type GiftSearchForm = GiftSearchInput;
 
@@ -29,6 +30,10 @@ export function GiftSearchClient({
   const idPrefix = useId();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<ProductResult[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null,
+  );
+
   const {
     register,
     handleSubmit,
@@ -92,7 +97,7 @@ export function GiftSearchClient({
             <input
               id={`${idPrefix}-gift-search`}
               type="text"
-              placeholder="Interests, hobbies, favorite things not already listed... your relationship with them..."
+              placeholder="Interests, hobbies, favorite things not already listed… your relationship with them…"
               className={cn(
                 "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
                 "ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
@@ -123,14 +128,7 @@ export function GiftSearchClient({
         </div>
       </form>
 
-      {isSubmitting && (
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center gap-2 text-muted-foreground">
-            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            <span>Finding personalized gift recommendations…</span>
-          </div>
-        </div>
-      )}
+      {isSubmitting && <ChristmasLoadingSkeleton recipientName={user.name} />}
 
       {!isSubmitting && products.length > 0 && (
         <div className="mt-8">

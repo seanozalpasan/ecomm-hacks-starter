@@ -44,26 +44,30 @@ Recipient Information:
 
 User Query: "${query}"
 
-CRITICAL REQUIREMENT: The user's query "${query}" is the PRIMARY focus. You MUST:
-1. Include the user's query terms or their direct synonyms in at least 2-3 of your suggestions
-2. Make the first suggestion directly relate to the user's query
-3. Combine the user's query with the recipient's interests to create personalized variations
-4. Never ignore or drift away from what the user is specifically asking for
+CRITICAL REQUIREMENT: Create a BALANCED and DIVERSE set of gift suggestions:
+1. ONE suggestion should directly relate to the user's query "${query}"
+2. The remaining suggestions should draw from the recipient's other interests and preferences
+3. Each suggestion should be in a DIFFERENT category to provide variety
+4. Aim for diversity across categories (e.g., tech, outdoors, books, fashion, hobbies, experiences)
 
-Please provide 3-5 specific search query suggestions that PRIORITIZE the user's query "${query}" while also matching the recipient's interests and preferences.${priceLimit ? ` All suggestions should respect the price limit of $${priceLimit}.` : ""}
+Please provide EXACTLY 3 specific search query suggestions that balance the user's query "${query}" with the recipient's broader interests and preferences.${priceLimit ? ` All suggestions should respect the price limit of $${priceLimit}.` : ""}
 
-IMPORTANT: The queries should be optimized for finding a specific product page, not blog posts or listicles.
+IMPORTANT: The queries should be optimized for finding a specific product page, not blog posts, articles, or Q&A forums.
 Bad: "Best gifts for coders"
 Bad: "Why skiing is my favorite thing"
 Bad: "Top 10 gifts for skiers"
 Bad: "Gift guide for outdoors lovers"
+Bad: "What is the difference between I love skiing and I love to ski"
+Bad: "How to choose ski equipment"
 Good: "Keychron K2 Mechanical Keyboard buy online"
 Good: "O'Reilly Clean Code book hardcover"
 Good: "Bose QuietComfort 45 headphones"
+Good: "Shirts with a cat on it"
 Good: "Smartwool Merino wool ski socks buy"
-Good: "GoPro Hero 12 Black edition price"
+Good: "Good gifts for software engineers"
+Good: "Burton Custom Snowboard 2024 shop"
 
-REQUIRED: Include purchase-intent keywords like "buy", "shop", "price", "purchase", or specific brand/model names to ensure we find actual product pages, NOT articles or blog posts.
+REQUIRED: Include purchase-intent keywords like "buy", "shop", "price", "purchase", or specific brand/model names to ensure we find actual product pages, NOT articles, blog posts, or Q&A forums.
 
 Focus on specific product names and brands when possible, while keeping the user's query "${query}" at the center of your suggestions.`;
 }
