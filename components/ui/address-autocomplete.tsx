@@ -50,7 +50,7 @@ export function AddressAutocomplete({
 	const [selectedIndex, setSelectedIndex] = React.useState(-1);
 	const [error, setError] = React.useState<string | null>(null);
 	const inputRef = React.useRef<HTMLInputElement>(null);
-	const listRef = React.useRef<HTMLUListElement>(null);
+	const listRef = React.useRef<HTMLDivElement>(null);
 	const containerRef = React.useRef<HTMLDivElement>(null);
 	const abortControllerRef = React.useRef<AbortController | null>(null);
 

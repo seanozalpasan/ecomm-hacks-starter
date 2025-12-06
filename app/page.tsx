@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	SignedIn,
-	SignedOut,
-	UserAvatar,
-	UserButton,
-	useUser,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -19,6 +13,7 @@ import { Logo } from "@/components/ui/logo";
 
 interface Game {
 	id: string;
+	name: string;
 	priceLimit: string | null;
 	deadline: Date;
 	categories: string[] | null;
@@ -38,17 +33,21 @@ async function fetchUserGames(): Promise<Game[]> {
 }
 
 function HomeContent() {
-  const searchParams = useSearchParams();
+	const searchParams = useSearchParams();
+	const { data: games, isLoading } = useQuery({
+		queryKey: ["userGames"],
+		queryFn: fetchUserGames,
+	});
 
-  useEffect(() => {
-    const onboardingRedirect = searchParams.get("onboarding_redirect");
-    if (onboardingRedirect === "true") {
-      toast.error("Onboarding already completed", {
-        description:
-          "You have already completed onboarding. You cannot access those pages again.",
-      });
-    }
-  }, [searchParams]);
+	useEffect(() => {
+		const onboardingRedirect = searchParams.get("onboarding_redirect");
+		if (onboardingRedirect === "true") {
+			toast.error("Onboarding already completed", {
+				description:
+					"You have already completed onboarding. You cannot access those pages again.",
+			});
+		}
+	}, [searchParams]);
 
 	return (
 		<div className="min-h-screen bg-white dark:bg-zinc-900">
@@ -120,10 +119,10 @@ function HomeContent() {
 											<div className="flex justify-between items-center">
 												<div>
 													<h3 className="text-lg font-bold text-black dark:text-white mb-1">
-														Secret Santa Game
+														{game.name}
 													</h3>
 													<p className="text-sm text-black dark:text-gray-300">
-														Due{" "}
+														Due
 														{new Date(game.deadline).toLocaleDateString(
 															"en-US",
 															{
@@ -132,7 +131,7 @@ function HomeContent() {
 															},
 														)}
 													</p>
-												</div>{" "}
+												</div>
 											</div>
 										</div>
 									</Link>
@@ -153,18 +152,12 @@ function HomeContent() {
 			</div>
 		</div>
 	);
-  return (
-    <div>
-      <Logo />
-      <h1 className="text-2xl font-bold">Unwrappd</h1>
-    </div>
-  );
 }
 
 export default function Home() {
-  return (
-    <Suspense fallback={<SearchLoading />}>
-      <HomeContent />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<SearchLoading />}>
+			<HomeContent />
+		</Suspense>
+	);
 }

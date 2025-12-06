@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 interface InviteResponseResult {
 	message: string;
 	status: "accepted" | "declined";
+	gameId: string;
 }
 
 export async function respondToInvite(
