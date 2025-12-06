@@ -27,8 +27,11 @@ IMPORTANT: Avoid queries that would return:
 - Reviews or comparisons
 - How-to guides or tutorials
 - News articles or opinion pieces
+- Q&A forums or question pages (e.g., "What is the difference between...")
+- Community discussion forums
+- Reddit threads or social media posts
 
-Instead, target ACTUAL PRODUCT PAGES with specific product names, brands, and purchase-related terms.
+Instead, target ACTUAL PRODUCT PAGES with specific product names, brands, and purchase-related terms. Your queries should lead directly to pages where someone can buy a product, not pages where people discuss or ask questions about products.
 
 Provide search query suggestions that feel personal, well-researched, and genuinely suited to the recipient. These should be queries someone would type into a search engine or e-commerce site to find relevant gifts.
 `;

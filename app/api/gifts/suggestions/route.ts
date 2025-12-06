@@ -110,40 +110,19 @@ export async function POST(request: NextRequest) {
       priceLimit,
     });
 
-    // Ensure at least one suggestion directly relates to the user's query
-    const suggestions = ideationResult.suggestions;
-    const queryTerms = query.toLowerCase().split(/\s+/);
-
-    // Check if any suggestion contains query terms
-    const hasQueryMatch = suggestions.some((suggestion) => {
-      const suggestionText = suggestion.searchQuery.toLowerCase();
-      return queryTerms.some((term: string) => term.length > 2 && suggestionText.includes(term));
-    });
-
-    // If no match found, prepend a direct query-based suggestion
-    const finalSuggestions = hasQueryMatch
-      ? suggestions
-      : [
-          {
-            searchQuery: query,
-            description: `Direct match for your search: ${query}`,
-            category: "User Request",
-          },
-          ...suggestions,
-        ];
-
-    const suggestionBuckets = finalSuggestions.slice(0, 6);
+    // Use exactly 3 categories for balanced diversity
+    // Gemini should return exactly 3 suggestions with different categories
+    const suggestionBuckets = ideationResult.suggestions.slice(0, 3);
 
     // PHASE 2: FIND ACTUAL PRODUCTS (Exa)
     // Pass the Gemini suggestions into Exa in parallel
+    // With 3 categories and 2 items per category, we get 6 diverse products
     const realProducts = await findProductsFromQueries(suggestionBuckets, {
       imageLinks: 3,
     });
 
-    const limitedProducts = realProducts.slice(0, 6);
-
     // PHASE 2.5: Enrich with live scrape (Firecrawl) and enforce price limit
-    const scrapedProducts = await enrichProductsWithFirecrawl(limitedProducts, {
+    const scrapedProducts = await enrichProductsWithFirecrawl(realProducts, {
       priceLimit: priceLimitValue,
     });
 

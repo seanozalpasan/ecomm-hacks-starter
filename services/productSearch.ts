@@ -47,29 +47,182 @@ type PriceInfo = {
   display: string;
 };
 
-const USD_PRICE_REGEX = /\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
-const USD_CODE_REGEX = /USD\s*(\d+(?:\.\d{2})?)/i;
 const DAYS_REGEX = /(\d+(?:\s*-\s*\d+)?)\s*(?:business\s*)?days?/i;
 const ARRIVES_REGEX =
   /(arrives|delivery|deliver(?:y)?|delivered|arriving|expected by)[^\n]{0,20}?\b(on|by|in)\s*([A-Za-z]{3,9}\s+\d{1,2}|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})/i;
 
+/**
+ * Enhanced price extraction that handles multiple formats and filters out unrealistic prices
+ */
 function extractPriceFromText(text: string | undefined | null): PriceInfo | null {
   if (!text) return null;
 
-  const usdMatch = text.match(USD_PRICE_REGEX);
-  if (usdMatch?.[1]) {
-    const numeric = Number(usdMatch[1].replace(/,/g, ""));
-    if (!Number.isNaN(numeric)) {
-      return { value: numeric, display: `$${numeric.toFixed(2)}` };
+  // Price patterns in order of reliability
+  const pricePatterns = [
+    // Standard USD format with optional cents: $29.99, $1,234.56
+    { regex: /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\b/g, format: 'standard' },
+
+    // Price with "USD" prefix: USD 29.99, USD29.99
+    { regex: /USD\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\b/gi, format: 'usd_prefix' },
+
+    // Price range - take the first (lower) price: $20-$30 or $20 - $30
+    { regex: /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*-\s*\$?\s*\d+/g, format: 'range' },
+
+    // Whole dollar amounts: $29 (but not year-like 2024)
+    { regex: /\$\s*(\d{1,3}(?:,\d{3})*)\b(?!\.\d)/g, format: 'whole' },
+  ];
+
+  const foundPrices: Array<{ value: number; display: string; confidence: number; position: number }> = [];
+
+  for (const pattern of pricePatterns) {
+    const matches = Array.from(text.matchAll(pattern.regex));
+
+    for (const match of matches) {
+      if (!match[1]) continue;
+
+      const numeric = Number(match[1].replace(/,/g, ""));
+
+      // Validate price is realistic (between $0.01 and $99,999)
+      if (Number.isNaN(numeric) || numeric < 0.01 || numeric > 99999) {
+        continue;
+      }
+
+      // Calculate confidence based on pattern type and context
+      let confidence = 100;
+      const matchPosition = match.index || 0;
+      const contextBefore = text.substring(Math.max(0, matchPosition - 30), matchPosition).toLowerCase();
+      const contextAfter = text.substring(matchPosition, Math.min(text.length, matchPosition + 30)).toLowerCase();
+
+      // Boost confidence for price-related keywords nearby
+      if (/(price|cost|sale|buy|purchase|retail|msrp)/i.test(contextBefore + contextAfter)) {
+        confidence += 50;
+      }
+
+      // Reduce confidence for "was" or "save" (likely old/sale price context)
+      if (/(was|originally|save|off|discount|compare)/i.test(contextBefore)) {
+        confidence -= 30;
+      }
+
+      // Reduce confidence if near shipping/tax keywords (not the product price)
+      if (/(shipping|tax|fee|total|subtotal|handling)/i.test(contextBefore + contextAfter)) {
+        confidence -= 40;
+      }
+
+      // Prefer prices at the beginning of text (more likely to be primary price)
+      const normalizedPosition = matchPosition / text.length;
+      if (normalizedPosition < 0.3) {
+        confidence += 20;
+      }
+
+      foundPrices.push({
+        value: numeric,
+        display: `$${numeric.toFixed(2)}`,
+        confidence,
+        position: matchPosition
+      });
     }
   }
 
-  const codeMatch = text.match(USD_CODE_REGEX);
-  if (codeMatch?.[1]) {
-    const numeric = Number(codeMatch[1]);
-    if (!Number.isNaN(numeric)) {
-      return { value: numeric, display: `$${numeric.toFixed(2)}` };
+  if (foundPrices.length === 0) return null;
+
+  // Sort by confidence (highest first), then by position (earliest first)
+  foundPrices.sort((a, b) => {
+    if (Math.abs(a.confidence - b.confidence) > 10) {
+      return b.confidence - a.confidence;
     }
+    return a.position - b.position;
+  });
+
+  // Return the highest confidence price
+  const bestPrice = foundPrices[0];
+
+  console.log(`Extracted price $${bestPrice.value} with confidence ${bestPrice.confidence} from text`);
+
+  return {
+    value: bestPrice.value,
+    display: bestPrice.display
+  };
+}
+
+/**
+ * Extracts price from structured data (JSON-LD, Schema.org Product markup)
+ * This is usually the most accurate source as it's meant for machine consumption
+ */
+function extractStructuredPrice(html: string | undefined | null): PriceInfo | null {
+  if (!html) return null;
+
+  try {
+    // Look for JSON-LD structured data
+    const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+    const jsonLdMatches = Array.from(html.matchAll(jsonLdRegex));
+
+    for (const match of jsonLdMatches) {
+      try {
+        const data = JSON.parse(match[1]);
+
+        // Handle both single objects and arrays
+        const items = Array.isArray(data) ? data : [data];
+
+        for (const item of items) {
+          // Look for Product schema
+          if (item['@type'] === 'Product' || item['@type']?.includes('Product')) {
+            // Check offers.price or offers.lowPrice
+            const offers = item.offers;
+            if (offers) {
+              const price = offers.price || offers.lowPrice;
+              if (price) {
+                const numeric = typeof price === 'string' ? parseFloat(price) : price;
+                if (!Number.isNaN(numeric) && numeric > 0) {
+                  console.log(`Found structured price from JSON-LD: $${numeric}`);
+                  return { value: numeric, display: `$${numeric.toFixed(2)}` };
+                }
+              }
+            }
+
+            // Sometimes price is directly on the product
+            if (item.price) {
+              const numeric = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+              if (!Number.isNaN(numeric) && numeric > 0) {
+                console.log(`Found structured price from JSON-LD product: $${numeric}`);
+                return { value: numeric, display: `$${numeric.toFixed(2)}` };
+              }
+            }
+          }
+        }
+      } catch (parseError) {
+        // Invalid JSON, skip this block
+        continue;
+      }
+    }
+
+    // Look for microdata price attributes
+    const microdataRegex = /itemprop=["']price["'][^>]*content=["']([^"']+)["']/gi;
+    const microdataMatches = Array.from(html.matchAll(microdataRegex));
+
+    for (const match of microdataMatches) {
+      const priceStr = match[1];
+      const numeric = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+      if (!Number.isNaN(numeric) && numeric > 0 && numeric < 99999) {
+        console.log(`Found structured price from microdata: $${numeric}`);
+        return { value: numeric, display: `$${numeric.toFixed(2)}` };
+      }
+    }
+
+    // Look for data attributes commonly used for prices
+    const dataAttrRegex = /data-price=["']([^"']+)["']/gi;
+    const dataMatches = Array.from(html.matchAll(dataAttrRegex));
+
+    for (const match of dataMatches) {
+      const priceStr = match[1];
+      const numeric = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+      if (!Number.isNaN(numeric) && numeric > 0 && numeric < 99999) {
+        console.log(`Found structured price from data attribute: $${numeric}`);
+        return { value: numeric, display: `$${numeric.toFixed(2)}` };
+      }
+    }
+
+  } catch (error) {
+    console.error("Error extracting structured price:", error);
   }
 
   return null;
@@ -214,6 +367,23 @@ function filterProductImages(imageUrls: string[]): string[] {
 function isNonProductUrl(url: string): boolean {
   const lowerUrl = url.toLowerCase();
 
+  // Positive indicators - if present, it's likely a product page
+  const productIndicators = [
+    /\/product[s]?\//i,
+    /\/item[s]?\//i,
+    /\/p\d+/i, // Product IDs like p26322
+    /\/sku\//i,
+    /\/buy\//i,
+    /\/shop\//i,
+    /\-p\d+$/i, // Ends with -p{digits}
+    /\d{6,}\.html/i, // Product ID in filename
+  ];
+
+  // If URL contains strong product indicators, keep it
+  if (productIndicators.some(pattern => pattern.test(lowerUrl))) {
+    return false;
+  }
+
   // Patterns that indicate non-product pages
   const excludePatterns = [
     /\/blog\//i,
@@ -222,7 +392,7 @@ function isNonProductUrl(url: string): boolean {
     /\/post\//i,
     /\/story\//i,
     /\/guide\//i,
-    /\/review\//i,
+    /\/reviews?\//i,
     /\/how-to/i,
     /\/best-/i,
     /\/top-\d+/i,
@@ -233,12 +403,18 @@ function isNonProductUrl(url: string): boolean {
     /\/humor/i,
     /\/opinion/i,
     /\/magazine/i,
-    /\/category\//i,
     /\/tag\//i,
     /\/archive/i,
     /\/about/i,
     /\/contact/i,
     /\/press/i,
+    /\/questions?\//i, // Q&A forums like HiNative
+    /\/answers?\//i,
+    /\/ask\//i,
+    /\/forum\//i,
+    /\/discussion\//i,
+    /\/thread\//i,
+    /\/community\//i,
   ];
 
   // Check URL path patterns
@@ -251,11 +427,16 @@ function isNonProductUrl(url: string): boolean {
     return true;
   }
 
-  // Check for blog-style slugs (very long URLs with many hyphens)
-  const pathParts = url.split('/').filter(Boolean);
+  // Check for article-style sentences in URL (multiple common words with hyphens)
+  // Articles often have phrases like "why-skiing-is-my-favorite-thing-ever"
+  const commonArticleWords = ['why', 'how', 'what', 'when', 'where', 'the', 'is', 'my', 'your', 'best', 'top', 'favorite', 'thing', 'ever', 'always', 'never'];
+  const pathParts = url.split('/');
   const lastPart = pathParts[pathParts.length - 1] || '';
-  const hyphenCount = (lastPart.match(/-/g) || []).length;
-  if (hyphenCount > 6 && lastPart.length > 50) {
+  const urlWords = lastPart.toLowerCase().split('-');
+  const articleWordCount = urlWords.filter(word => commonArticleWords.includes(word)).length;
+
+  // If URL contains 3+ common article words, it's likely an article
+  if (articleWordCount >= 3) {
     return true;
   }
 
@@ -312,10 +493,51 @@ async function scrapeProductDetails(product: ProductResult): Promise<ProductResu
     // Extract metadata if available
     const metadata = scrapeResult?.metadata || {};
 
-    // Try to find price in markdown first, then fallback to metadata
-    const priceFromText = extractPriceFromText(markdown) || extractPriceFromText(html);
+    // Try to extract structured data (JSON-LD, Schema.org) which is the most reliable
+    const structuredPrice = extractStructuredPrice(html);
+
+    // Validate page content to detect Q&A forums or non-product pages
+    const pageContent = (markdown + " " + html + " " + metadata?.title || "").toLowerCase();
+    const nonProductIndicators = [
+      "what is the difference between",
+      "answer:",
+      "asked by",
+      "question:",
+      "view all answers",
+      "best answer",
+      "answered",
+      "related questions",
+      "similar questions",
+      "upvote",
+      "downvote",
+    ];
+
+    const hasNonProductIndicators = nonProductIndicators.some(indicator =>
+      pageContent.includes(indicator)
+    );
+
+    if (hasNonProductIndicators) {
+      console.log(`Filtered out non-product page during scrape: ${product.url}`);
+      // Return null or mark for exclusion
+      throw new Error("Non-product page detected");
+    }
+
+    // Extract prices from multiple sources with priority
+    // Priority: 1) Structured data (JSON-LD/microdata), 2) Metadata, 3) HTML, 4) Markdown
     const priceFromMeta = extractPriceFromText(metadata?.price);
-    const priceInfo = priceFromText || priceFromMeta;
+    const priceFromHtml = extractPriceFromText(html);
+    const priceFromMarkdown = extractPriceFromText(markdown);
+
+    // Prioritize structured data (most reliable), then metadata, then HTML, then markdown
+    const priceInfo = structuredPrice || priceFromMeta || priceFromHtml || priceFromMarkdown;
+
+    console.log(`Price extraction for ${product.url}:`, {
+      structured: structuredPrice?.display,
+      metadata: priceFromMeta?.display,
+      html: priceFromHtml?.display,
+      markdown: priceFromMarkdown?.display,
+      selected: priceInfo?.display
+    });
 
     const shippingInfo = extractShippingInfo(markdown + " " + html);
 
@@ -349,9 +571,18 @@ async function scrapeProductDetails(product: ProductResult): Promise<ProductResu
       imageUrl: images[0] || product.imageUrl,
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // If we detected a non-product page, return null to filter it out
+    if (errorMessage === "Non-product page detected") {
+      console.log(`Excluding non-product page: ${product.url}`);
+      // We'll handle this in the enrichment function
+      throw error;
+    }
+
     console.error("Firecrawl scrape failed", {
       url: product.url,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
     });
     return product;
   }
@@ -375,14 +606,25 @@ export async function enrichProductsWithFirecrawl(
   const enriched: ProductResult[] = [];
 
   for (const product of maxItems) {
-    const detailed = await scrapeProductDetails(product);
+    try {
+      const detailed = await scrapeProductDetails(product);
 
-    const parsed = detailed.priceUsd ?? extractPriceFromText(detailed.price)?.value;
-    if (options?.priceLimit && parsed && parsed > options.priceLimit) {
-      continue;
+      const parsed = detailed.priceUsd ?? extractPriceFromText(detailed.price)?.value;
+      if (options?.priceLimit && parsed && parsed > options.priceLimit) {
+        continue;
+      }
+
+      enriched.push(detailed);
+    } catch (error) {
+      // If non-product page detected during scraping, skip it
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage === "Non-product page detected") {
+        console.log(`Skipping non-product result: ${product.url}`);
+        continue;
+      }
+      // For other errors, include the original product
+      enriched.push(product);
     }
-
-    enriched.push(detailed);
   }
 
   return enriched;
@@ -402,7 +644,7 @@ export async function findProductsFromQueries(
     try {
       const result = await exa.search(q.searchQuery, {
         type: "auto",
-        numResults: 3, // Get top 3 results per query bucket for better filtering
+        numResults: 2, // Get 2 results per query bucket for diverse categories
         excludeDomains: [
           "reddit.com",
           "quora.com",
@@ -436,6 +678,12 @@ export async function findProductsFromQueries(
           "cnn.com",
           "theguardian.com",
           "npr.org",
+          "hinative.com",
+          "stackexchange.com",
+          "stackoverflow.com",
+          "answers.com",
+          "askmefi.com",
+          "yahoo.com",
         ],
         contents: {
           summary: {
@@ -486,17 +734,23 @@ export async function findProductsFromQueries(
         const productName =
           item.summary?.productName || item.title || "Unknown Product";
 
-        // Filter out "Best Of" list articles by title
-        const isList =
+        // Filter out "Best Of" list articles and Q&A pages by title
+        const lowerProductName = productName.toLowerCase();
+        const isNonProduct =
           /^(top|best|\d+)\s+(best|top|\d+)/i.test(productName) ||
-          productName.toLowerCase().includes("best gifts") ||
-          productName.toLowerCase().includes("top gifts") ||
-          productName.toLowerCase().includes("gift guide") ||
-          productName.toLowerCase().includes("why ") ||
-          productName.toLowerCase().includes("how to");
+          lowerProductName.includes("best gifts") ||
+          lowerProductName.includes("top gifts") ||
+          lowerProductName.includes("gift guide") ||
+          lowerProductName.includes("why ") ||
+          lowerProductName.includes("how to") ||
+          lowerProductName.startsWith("what is the difference") ||
+          lowerProductName.startsWith("what's the difference") ||
+          lowerProductName.includes("difference between") ||
+          lowerProductName.includes("?") || // Questions often have ?
+          /^(how|why|what|when|where|who)\s/i.test(productName);
 
-        if (isList) {
-          console.log(`Filtered out list/article by title: ${productName}`);
+        if (isNonProduct) {
+          console.log(`Filtered out list/article/Q&A by title: ${productName}`);
           return null;
         }
 
@@ -528,3 +782,4 @@ export async function findProductsFromQueries(
   const results = await Promise.all(searchPromises);
   return results.flat().filter((item): item is ProductResult => item !== null);
 }
+

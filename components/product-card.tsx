@@ -10,12 +10,14 @@ type ProductCardProps = {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   // Get the first available image
-  const productImage = product.images && product.images.length > 0
-    ? product.images[0]
-    : product.imageUrl || null;
+  const productImage =
+    product.images && product.images.length > 0
+      ? product.images[0]
+      : product.imageUrl || null;
 
   // Check if price is $0.00 or invalid
-  const isPriceUnavailable = product.price === "$0.00" ||
+  const isPriceUnavailable =
+    product.price === "$0.00" ||
     product.price === "0.00" ||
     product.price === "$0" ||
     product.price === "0" ||
@@ -66,7 +68,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-medium text-base group-hover:text-ring transition-colors line-clamp-2">
+            <h3 className="font-medium text-base transition-colors line-clamp-2">
               {product.title}
             </h3>
             {product.category && (
@@ -107,4 +109,3 @@ export function ProductCard({ product, className }: ProductCardProps) {
     </a>
   );
 }
-
