@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm';
 
 // Enum for game status
 export const gameStatusEnum = pgEnum('game_status', ['CANCELLED', 'DRAFT', 'ACTIVE']);
+export const inviteStatusEnum = pgEnum('invite_status', ['PENDING', 'ACCEPTED', 'DECLINED']);
 
 // Users table
 export const users = pgTable('users', {
@@ -14,6 +15,14 @@ export const users = pgTable('users', {
   location: text('location').notNull(),
   giftPreferences: text('gift_preferences').array(),
   clothingSize: text('clothing_size'),
+});
+
+export const gameInvites = pgTable('game_invites', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  gameID: uuid('game_id').notNull().references(() => games.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  invitedAt: timestamp('invited_at').defaultNow(),
+  status: inviteStatusEnum(),
 });
 
 // Games table
@@ -88,3 +97,4 @@ export const userMatchesRelations = relations(gameUserMatches, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
