@@ -57,7 +57,7 @@ pnpm run dev
 
 ### Screenshots
 
-![Demo](https://raw.githubusercontent.com/seanozalpasan/unwrappd/refs/heads/main/public/images/DemoImage.png)
+![Demo](https://github.com/seanozalpasan/unwrappd/blob/main/public/images/DemoImage.png)
 
 1.
 2. ...
