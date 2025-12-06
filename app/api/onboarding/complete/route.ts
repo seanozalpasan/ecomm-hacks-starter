@@ -19,6 +19,7 @@ const payloadSchema = z.object({
 		favoriteHobby: z.string(),
 		favoriteGift: z.string(),
 	}),
+	interests: z.array(z.string()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
 			email,
 			basics: parsed.basics,
 			likes: parsed.likes,
+			interests: parsed.interests,
 		};
 
 		const result = await completeOnboarding(input);
