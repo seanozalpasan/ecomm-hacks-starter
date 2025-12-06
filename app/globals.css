@@ -120,3 +120,9 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Ensure Sonner toasts use the correct font */
+[data-sonner-toast],
+[data-sonner-toast] * {
+  font-family: var(--font-sn-pro), system-ui, -apple-system, sans-serif !important;
+}
