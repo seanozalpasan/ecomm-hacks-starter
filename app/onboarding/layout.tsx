@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const ONBOARDING_STEPS = [
 	{ path: "/onboarding/basics", label: "Basics", step: 1 },
-	{ path: "/onboarding/likes", label: "Likes", step: 2 },
+	{ path: "/onboarding/interests", label: "Interests", step: 2 },
 ];
 
 export default function OnboardingLayout({

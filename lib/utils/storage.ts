@@ -1,6 +1,7 @@
 const STORAGE_KEY = "onboarding_data";
 
 export interface OnboardingData {
+	interests?: string[];
 	basics?: {
 		birthday: string;
 		name: string;
