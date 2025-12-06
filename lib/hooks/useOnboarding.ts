@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getOnboardingData, saveOnboardingData } from "@/lib/utils/storage";
 
 interface BasicsData {
@@ -96,6 +97,15 @@ export function useSubmitLikes() {
 					2: variables.favoriteHobby,
 					3: variables.favoriteGift,
 				},
+			});
+			toast.success("Onboarding completed!", {
+				description: "Your profile has been created successfully.",
+			});
+		},
+		onError: (error) => {
+			toast.error("Failed to complete onboarding", {
+				description:
+					error instanceof Error ? error.message : "Please try again.",
 			});
 		},
 	});
