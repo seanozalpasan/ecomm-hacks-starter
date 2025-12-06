@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -203,12 +204,18 @@ export default function BasicsPage() {
 					<FieldLabel htmlFor={`${idPrefix}-location`}>Location</FieldLabel>
 					<FieldContent>
 						<div className="flex flex-col gap-2">
-							<Input
-								id={`${idPrefix}-location`}
-								type="text"
-								{...register("location")}
-								placeholder="Enter your location"
-								aria-invalid={errors.location ? "true" : "false"}
+							<Controller
+								name="location"
+								control={control}
+								render={({ field }) => (
+									<AddressAutocomplete
+										id={`${idPrefix}-location`}
+										value={field.value}
+										onChange={field.onChange}
+										placeholder="Enter your location…"
+										aria-invalid={errors.location ? "true" : "false"}
+									/>
+								)}
 							/>
 							<div className="flex items-center gap-3">
 								<button

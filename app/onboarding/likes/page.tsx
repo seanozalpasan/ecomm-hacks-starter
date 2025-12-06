@@ -49,7 +49,7 @@ export default function LikesPage() {
 		}
 	}, [setValue]);
 
-	const onSubmit = (data: LikesFormData) => {
+	const onSubmit = async (data: LikesFormData) => {
 		submitLikes(
 			{
 				favoriteColor: data.favoriteColor,
@@ -57,7 +57,27 @@ export default function LikesPage() {
 				favoriteGift: data.favoriteGift,
 			},
 			{
-				onSuccess: () => {
+				onSuccess: async () => {
+					// Check if there's a pending invite to accept
+					const pendingInviteId = localStorage.getItem("pendingInviteAccept");
+					if (pendingInviteId) {
+						try {
+							// Accept the invite
+							await fetch("/api/games/invite/respond", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									inviteId: pendingInviteId,
+									action: "accept",
+								}),
+							});
+							localStorage.removeItem("pendingInviteAccept");
+						} catch (error) {
+							console.error("Failed to auto-accept invite:", error);
+						}
+					}
 					router.push("/");
 				},
 			},

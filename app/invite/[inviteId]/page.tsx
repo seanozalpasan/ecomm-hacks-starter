@@ -47,6 +47,23 @@ async function respondToInvite(inviteId: string, action: "accept" | "decline") {
 	return response.json();
 }
 
+async function declineInvite(inviteId: string) {
+	const response = await fetch("/api/games/invite/decline", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ inviteId }),
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to decline invite");
+	}
+
+	return response.json();
+}
+
 export default function InvitePage() {
 	const params = useParams();
 	const router = useRouter();
@@ -73,6 +90,34 @@ export default function InvitePage() {
 			alert(error instanceof Error ? error.message : "Failed to respond");
 		},
 	});
+
+	const { mutate: decline, isPending: isDeclining } = useMutation({
+		mutationFn: () => declineInvite(inviteId),
+		onSuccess: () => {
+			router.push("/");
+		},
+		onError: (error) => {
+			alert(error instanceof Error ? error.message : "Failed to decline");
+		},
+	});
+
+	const handleAccept = () => {
+		if (!isSignedIn) {
+			// Store the invite ID in localStorage so we can auto-accept after onboarding
+			localStorage.setItem("pendingInviteAccept", inviteId);
+			router.push(`/sign-up?redirect_url=/onboarding/basics`);
+		} else {
+			respond("accept");
+		}
+	};
+
+	const handleDecline = () => {
+		if (!isSignedIn) {
+			decline();
+		} else {
+			respond("decline");
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -186,39 +231,24 @@ export default function InvitePage() {
 							)}
 						</div>
 
-						{!isSignedIn ? (
-							<div className="space-y-3">
-								<p className="text-sm text-center text-zinc-600 dark:text-zinc-400">
-									Please sign in to respond to this invitation
-								</p>
-								<button
-									type="button"
-									onClick={() => router.push(`/sign-in?redirect_url=/invite/${inviteId}`)}
-									className="w-full px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
-								>
-									Sign In to Respond
-								</button>
-							</div>
-						) : (
-							<div className="flex gap-3">
-								<button
-									type="button"
-									onClick={() => respond("decline")}
-									disabled={isPending}
-									className="flex-1 px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									{isPending ? "Processing..." : "Decline"}
-								</button>
-								<button
-									type="button"
-									onClick={() => respond("accept")}
-									disabled={isPending}
-									className="flex-1 px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									{isPending ? "Processing..." : "Accept"}
-								</button>
-							</div>
-						)}
+						<div className="flex gap-3">
+							<button
+								type="button"
+								onClick={handleDecline}
+								disabled={isPending || isDeclining}
+								className="flex-1 px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isPending || isDeclining ? "Processing..." : "Decline"}
+							</button>
+							<button
+								type="button"
+								onClick={handleAccept}
+								disabled={isPending || isDeclining}
+								className="flex-1 px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isPending || isDeclining ? "Processing..." : "Accept"}
+							</button>
+						</div>
 					</>
 				)}
 
