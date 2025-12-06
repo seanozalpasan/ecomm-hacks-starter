@@ -1,24 +1,10 @@
 "use client";
 
-import {
-	X,
-	Film,
-	Gamepad2,
-	Music,
-	Trophy,
-	Palette,
-	ShoppingBag,
-	Coffee,
-	Laptop,
-	Sparkles,
-	Gift,
-	Heart,
-} from "lucide-react";
+import { Gift, Heart, Sparkles, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { getOnboardingData } from "@/lib/utils/storage";
+import { Button } from "@/components/ui/button";
 
 // Christmas candy-cane color scheme - gradient properly contained
 const PILL_STYLES = {
@@ -343,13 +329,13 @@ export default function InterestsPage() {
 									className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
 								/>
 							</div>
-							<button
+							<Button
 								onClick={addCustomInterest}
 								disabled={!customInput.trim() || customInterests.length >= 3}
-								className="px-8 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+								className="px-8 py-4 h-auto bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 shadow-lg hover:shadow-xl"
 							>
 								Add
-							</button>
+							</Button>
 						</div>
 						{customInterests.length >= 3 && (
 							<p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
@@ -373,12 +359,14 @@ export default function InterestsPage() {
 									className="px-6 py-3 rounded-full font-medium bg-amber-500 text-white border-2 border-amber-600 shadow-lg flex items-center gap-2"
 								>
 									<span>{interest}</span>
-									<button
+									<Button
+										variant="ghost"
+										size="icon-sm"
 										onClick={() => removeCustomInterest(interest)}
-										className="hover:bg-white/20 rounded-full p-1 transition-colors"
+										className="hover:bg-white/20 rounded-full size-6"
 									>
 										<X size={16} />
-									</button>
+									</Button>
 								</div>
 							))}
 						</div>
@@ -388,7 +376,6 @@ export default function InterestsPage() {
 				{/* Interest Categories - Full Width */}
 				<div className="space-y-8 mb-12 px-6">
 					{INTEREST_CATEGORIES.map((category, categoryIndex) => {
-						const Icon = category.icon;
 						return (
 							<motion.div
 								key={category.title}
@@ -396,49 +383,44 @@ export default function InterestsPage() {
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ delay: categoryIndex * 0.05 }}
 							>
-								<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
-									<Icon className="w-6 h-6" />
+								<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
 									{category.title}
 								</h2>
-							<div className="flex flex-wrap gap-3">
-								{category.interests.map((interest) => {
-									const isSelected = selectedInterests.includes(interest);
-									return (
-										<button
-											key={interest}
-											onClick={() => toggleInterest(interest)}
-											disabled={!isSelected && totalSelections >= 8}
-											className={`px-6 py-3 rounded-full font-medium ${
-												isSelected
-													? PILL_STYLES.selected
-													: PILL_STYLES.unselected
-											} disabled:opacity-50 disabled:cursor-not-allowed`}
-										>
-											{interest}
-										</button>
-									);
-								})}
-							</div>
-						</motion.div>
-					);
+								<div className="flex flex-wrap gap-3">
+									{category.interests.map((interest) => {
+										const isSelected = selectedInterests.includes(interest);
+										return (
+											<Button
+												key={interest}
+												variant="outline"
+												onClick={() => toggleInterest(interest)}
+												disabled={!isSelected && totalSelections >= 8}
+												className={`px-6 py-3 h-auto rounded-full font-medium ${
+													isSelected
+														? PILL_STYLES.selected
+														: PILL_STYLES.unselected
+												}`}
+											>
+												{interest}
+											</Button>
+										);
+									})}
+								</div>
+							</motion.div>
+						);
 					})}
 				</div>
 
 				{/* Continue Button */}
-				<div className="flex justify-center gap-4 pb-8 px-4">
-					<button
-						onClick={() => router.push("/onboarding/basics")}
-						className="px-12 py-4 bg-white border-2 border-gray-300 text-gray-700 text-lg font-bold rounded-full hover:bg-gray-50 transition-all"
-					>
-						Back
-					</button>
-					<button
+				<div className="flex justify-center pb-8 px-4">
+					<Button
 						onClick={handleContinue}
 						disabled={totalSelections < 3}
-						className="px-12 py-4 bg-red-500 text-white text-lg font-bold rounded-full hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+						size="lg"
+						className="px-12 py-4 h-auto bg-red-500 text-white text-lg font-bold rounded-full hover:bg-red-600 hover:shadow-2xl"
 					>
 						Continue to Next Step
-					</button>
+					</Button>
 				</div>
 
 				{totalSelections < 3 && (
