@@ -54,9 +54,9 @@ export async function GET(
 
 The image should be suitable for a digital invitation card, with a 16:9 aspect ratio, warm color palette, and clear, readable text.`;
 
-		// Generate image using Nano Banana Pro
+		// Generate image using Nano Banana / Gemini image-capable model
 		const response = await ai.models.generateContent({
-			model: "gemini-2.0-flash-exp",
+			model: "gemini-2.0-flash-exp", // image-capable
 			contents: [
 				{
 					role: "user",

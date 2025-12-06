@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getGameDetails } from "@/services/games/get-game";
 import { updateGameSchema } from "@/schemas/games/update";
+import { getGameDetails } from "@/services/games/get-game";
 import { updateGame } from "@/services/games/update";
 
 export async function GET(
@@ -39,8 +39,7 @@ export async function GET(
 		return NextResponse.json(
 			{
 				success: false,
-				error:
-					error instanceof Error ? error.message : "Internal server error",
+				error: error instanceof Error ? error.message : "Internal server error",
 			},
 			{ status: 500 },
 		);

@@ -130,9 +130,19 @@ async function fetchPostcardImage(inviteId: string): Promise<string | null> {
 		if (!response.ok) {
 			let errorMessage = "Failed to fetch postcard image";
 			try {
-				const errorData = await response.json();
-				if (errorData?.message) {
-					errorMessage = `${errorMessage}: ${errorData.message}`;
+				const text = await response.text();
+				try {
+					const errorData = JSON.parse(text);
+					const parts = [
+						errorMessage,
+						errorData?.message,
+						errorData?.error,
+						errorData?.details,
+					].filter(Boolean);
+					errorMessage = parts.join(" - ");
+				} catch {
+					// Response was not JSON; include raw text
+					errorMessage = `${errorMessage}: ${text}`;
 				}
 			} catch {
 				// ignore parse errors
@@ -270,7 +280,7 @@ export default function InvitePage() {
 
 	if (isLoading) {
 		return (
-			<div className="min-h-screen bg-white flex items-center justify-center p-4">
+			<div className=" bg-white flex items-center justify-center p-4">
 				<div className="bg-white rounded-lg max-w-md w-full space-y-6">
 					<Skeleton className="w-full h-48 rounded-lg" />
 					<div className="space-y-2">
@@ -303,7 +313,7 @@ export default function InvitePage() {
 	if (error && (error as Error & { status?: number }).status !== 404) {
 		// Show error state for non-404 errors
 		return (
-			<div className="min-h-screen bg-white flex items-center justify-center p-4">
+			<div className="bg-white flex items-center justify-center p-4">
 				<div className="bg-white rounded-lg p-8 max-w-md">
 					<h1 className="text-2xl font-bold mb-4 text-red-600">
 						Error Loading Invitation
@@ -334,7 +344,7 @@ export default function InvitePage() {
 	const hasResponded = invite.status !== "PENDING";
 
 	return (
-		<div className="min-h-screen bg-white flex items-center justify-center p-4">
+		<div className=" bg-white flex items-center justify-center p-4">
 			<div className="bg-white rounded-lg max-w-md w-full">
 				{/* Postcard image */}
 				<div className="w-full h-48 bg-zinc-100 rounded-lg mb-6 overflow-hidden relative">
@@ -359,7 +369,7 @@ export default function InvitePage() {
 
 				{/* Title */}
 				<h1 className="text-2xl font-bold text-center mb-8 text-zinc-900">
-					You've been invited to join {gameName} Secret Santa
+					You've been invited to join {gameName}
 				</h1>
 
 				{hasResponded ? (
