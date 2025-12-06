@@ -5,6 +5,8 @@ import { UserButton, useUser } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
 import CircularUserImages from '@/components/circular-user-images'
+import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/ui/logo'
 
 interface GamePageProps {
   params: Promise<{
@@ -115,20 +117,21 @@ export default function IndividualGamePage({ params }: GamePageProps) {
   }, [gameData]);
 
   if (!isLoaded || isLoading) {
-    return <div className="min-h-screen bg-gray-100 p-8 text-center">Loading game details...</div>;
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <p className="text-muted-foreground">Loading game details...</p>
+      </div>
+    );
   }
 
   if (error || !gameData) {
     return (
-      <div className="min-h-screen bg-gray-100 p-8 text-center">
-        <h1 className="text-3xl font-bold mt-10">❌ Game not found</h1>
-        <p className="text-gray-600 mt-4">{error instanceof Error ? error.message : 'This game could not be found.'}</p>
-        <button
-            onClick={() => router.push('/')}
-            className="mt-4 text-blue-600 hover:text-blue-800 underline"
-        >
-            Go Home
-        </button>
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex flex-col items-center justify-center p-4">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Game not found</h1>
+        <p className="text-muted-foreground mb-6">{error instanceof Error ? error.message : 'This game could not be found.'}</p>
+        <Button onClick={() => router.push('/')} variant="outline">
+          Go Home
+        </Button>
       </div>
     );
   }
@@ -163,25 +166,23 @@ export default function IndividualGamePage({ params }: GamePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <button
-            onClick={() => router.push('/')}
-            className="text-xl font-bold text-blue-600 hover:text-blue-800 transition"
-          >
-            ← Home
-          </button>
-          <UserButton afterSignOutUrl="/" />
-        </div>
-      </nav>
+    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+      <header className="flex justify-between items-center p-4 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400 transition"
+        >
+          <Logo />
+        </button>
+        <UserButton afterSignOutUrl="/" />
+      </header>
 
-      <main className="max-w-4xl mx-auto p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            🎄 Secret Santa Game
+      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-16">
+        <div className="text-center mb-8 space-y-2">
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+            Secret Santa Game
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {gameData.status === 'DRAFT' && 'Waiting for everyone to join...'}
             {gameData.status === 'ACTIVE' && 'The game is active!'}
             {gameData.status === 'COMPLETED' && 'This game has been completed'}
@@ -196,39 +197,39 @@ export default function IndividualGamePage({ params }: GamePageProps) {
             radius={150}
           />
           {pendingCount > 0 && (
-            <p className="text-center text-gray-500 mt-4">
+            <p className="text-center text-muted-foreground mt-4">
               {pendingCount} {pendingCount === 1 ? 'person' : 'people'} still pending...
             </p>
           )}
         </div>
 
         {/* Game Details */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Game Details</h2>
+        <div className="bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 mb-6">
+          <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100">Game Details</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">💰</span>
+              <span className="text-2xl">💰</span>
               <div>
-                <p className="text-sm text-gray-500">Price Limit</p>
-                <p className="text-lg font-semibold">${gameData.priceLimit || '25'}</p>
+                <p className="text-sm text-muted-foreground">Price Limit</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">${gameData.priceLimit || '25'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-3xl">📅</span>
+              <span className="text-2xl">📅</span>
               <div>
-                <p className="text-sm text-gray-500">Gift Deadline</p>
-                <p className="text-lg font-semibold">{formatDate(gameData.deadline)}</p>
+                <p className="text-sm text-muted-foreground">Gift Deadline</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{formatDate(gameData.deadline)}</p>
               </div>
             </div>
 
             {gameData.categories && gameData.categories.length > 0 && (
-              <div className="flex items-center gap-3 md:col-span-2">
-                <span className="text-3xl">🎁</span>
+              <div className="flex items-center gap-3 sm:col-span-2">
+                <span className="text-2xl">🎁</span>
                 <div>
-                  <p className="text-sm text-gray-500">Categories</p>
-                  <p className="text-lg font-semibold">{gameData.categories.join(', ')}</p>
+                  <p className="text-sm text-muted-foreground">Categories</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{gameData.categories.join(', ')}</p>
                 </div>
               </div>
             )}
@@ -236,46 +237,49 @@ export default function IndividualGamePage({ params }: GamePageProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {isOwner && (
-            <button
+            <Button
               onClick={() => router.push(`/games/${gameId}/manage`)}
-              className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-md"
+              className="w-full"
+              size="lg"
             >
-              🛠️ Manage Game
-            </button>
+              Manage Game
+            </Button>
           )}
 
           {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
-            <button
+            <Button
               onClick={async () => {
                 const match = await fetchMatch(gameId);
                 if (match?.buyingFor?.id) {
                   router.push(`/gifts/search?userId=${match.buyingFor.id}&gameId=${gameId}`);
                 }
               }}
-              className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition shadow-md"
+              className="w-full"
+              size="lg"
+              variant="outline"
             >
-              🎁 View Your Match
-            </button>
+              View Your Match
+            </Button>
           )}
         </div>
 
         {/* Status Messages */}
         {gameData.status === 'DRAFT' && (
-          <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-            <p className="text-blue-800">
+          <div className="mt-6 bg-muted border-l-4 border-primary p-4 rounded">
+            <p className="text-sm text-muted-foreground">
               {isOwner
-                ? '⏳ Waiting for participants to accept their invites. You can manually start matching from the Manage Game page.'
-                : '⏳ The host is waiting for everyone to join before starting the game.'}
+                ? 'Waiting for participants to accept their invites. You can manually start matching from the Manage Game page.'
+                : 'The host is waiting for everyone to join before starting the game.'}
             </p>
           </div>
         )}
 
         {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
-          <div className="mt-6 bg-green-50 border-l-4 border-green-400 p-4 rounded">
-            <p className="text-green-800">
-              ✨ Matches have been created! Click "View Your Match" above to see who you're buying for.
+          <div className="mt-6 bg-muted border-l-4 border-primary p-4 rounded">
+            <p className="text-sm text-muted-foreground">
+              Matches have been created! Click "View Your Match" above to see who you're buying for.
             </p>
           </div>
         )}
