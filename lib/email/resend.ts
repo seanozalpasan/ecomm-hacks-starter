@@ -100,7 +100,7 @@ If you didn't expect this invitation, you can safely ignore this email.
 	`;
 
 	await resend.emails.send({
-		from: "Secret Santa <onboarding@resend.dev>",
+		from: "Secret Santa <noreply@shaynesidman.com>",
 		to,
 		subject: `🎁 You're invited to a Secret Santa gift exchange!`,
 		html,
