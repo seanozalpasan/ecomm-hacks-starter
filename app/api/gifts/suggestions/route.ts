@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { generateGiftSuggestions } from "@/services/gifts";
+import { findProductsFromQueries, type ProductResult } from "@/services/productSearch";
 
 interface GiftSuggestion {
   searchQuery: string;
@@ -9,8 +10,22 @@ interface GiftSuggestion {
   category: string;
 }
 
+interface RecipientContext {
+  name: string;
+  likes: string[];
+  dislikes: string[];
+  preferences: {
+    music: string[];
+    books: string[];
+    movies: string[];
+  };
+  additionalInfo: string;
+}
+
 interface GiftSuggestionsResponse {
-  giftSuggestions: GiftSuggestion[];
+  context: RecipientContext;
+  suggestionBuckets: GiftSuggestion[];
+  products: ProductResult[];
 }
 
 export async function POST(request: NextRequest) {
@@ -33,11 +48,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Game ID is required" }, { status: 400 });
     }
 
-    const result = await generateGiftSuggestions({ query, userId, gameId, priceLimit });
+    // PHASE 1: GENERATE IDEAS (Gemini)
+    // This returns the "buckets" like: [{ searchQuery: "mechanical keyboard", category: "Tech" }, ...]
+    const ideationResult = await generateGiftSuggestions({
+      query,
+      userId,
+      gameId,
+      priceLimit,
+    });
 
+    // PHASE 2: FIND ACTUAL PRODUCTS (Exa)
+    // Pass the Gemini suggestions into Exa in parallel
+    const realProducts = await findProductsFromQueries(ideationResult.suggestions, {
+      imageLinks: 3,
+    });
+
+    // PHASE 3: Return combined data
     return NextResponse.json<GiftSuggestionsResponse>(
       {
-        giftSuggestions: result.suggestions,
+        context: ideationResult.recipient, // Helpful for debugging/UI
+        suggestionBuckets: ideationResult.suggestions, // The AI's abstract ideas
+        products: realProducts, // The actual clickable links found by Exa
       },
       { status: 200 },
     );

@@ -44,7 +44,15 @@ Recipient Information:
 
 User Query: ${query}
 
-Please provide 3-5 specific search query suggestions that match the recipient's interests and preferences.${priceLimit ? ` All suggestions should respect the price limit of $${priceLimit}.` : ""}`;
+Please provide 3-5 specific search query suggestions that match the recipient's interests and preferences.${priceLimit ? ` All suggestions should respect the price limit of $${priceLimit}.` : ""}
+
+IMPORTANT: The queries should be optimized for finding a specific product page, not blog posts or listicles.
+Bad: "Best gifts for coders"
+Good: "Keychron K2 Mechanical Keyboard buy online"
+Good: "O'Reilly Clean Code book hardcover"
+Good: "Bose QuietComfort 45 headphones"
+
+Focus on specific product names and brands when possible.`;
 }
 
 export async function generateGiftSuggestions({

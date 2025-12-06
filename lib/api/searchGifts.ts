@@ -6,8 +6,32 @@ export interface GiftSuggestion {
   category: string;
 }
 
+export interface ProductResult {
+  title: string;
+  price: string;
+  description: string;
+  url: string;
+  imageUrl: string;
+  sourceQuery: string;
+  category: string;
+}
+
+export interface RecipientContext {
+  name: string;
+  likes: string[];
+  dislikes: string[];
+  preferences: {
+    music: string[];
+    books: string[];
+    movies: string[];
+  };
+  additionalInfo: string;
+}
+
 export interface GiftSearchResponse {
-  giftSuggestions: GiftSuggestion[];
+  context: RecipientContext;
+  suggestionBuckets: GiftSuggestion[];
+  products: ProductResult[];
 }
 
 export async function searchGifts(
