@@ -84,7 +84,7 @@ export default function InvitePage() {
 			respondToInvite(inviteId, action),
 		onSuccess: (data) => {
 			if (data.data.status === "accepted" && data.data.gameId) {
-				router.push(`/dashboard/games/${data.data.gameId}`);
+				router.push(`/games/${data.data.gameId}`);
 			} else {
 				router.push("/");
 			}

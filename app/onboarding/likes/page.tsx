@@ -78,7 +78,7 @@ export default function LikesPage() {
 							if (response.ok) {
 								const result = await response.json();
 								if (result.data?.gameId) {
-									router.push(`/dashboard/games/${result.data.gameId}`);
+									router.push(`/games/${result.data.gameId}`);
 									return;
 								}
 							}

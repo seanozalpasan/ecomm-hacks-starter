@@ -100,10 +100,10 @@ export default function IndividualGamePage({ params }: GamePageProps) {
         <h1 className="text-3xl font-bold mt-10">❌ Game not found</h1>
         <p className="text-gray-600 mt-4">{error instanceof Error ? error.message : 'This game could not be found.'}</p>
         <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/')}
             className="mt-4 text-blue-600 hover:text-blue-800 underline"
         >
-            Go back to Dashboard
+            Go Home
         </button>
       </div>
     );
@@ -122,10 +122,10 @@ export default function IndividualGamePage({ params }: GamePageProps) {
       <nav className="bg-white shadow-sm p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/')}
             className="text-xl font-bold text-blue-600 hover:text-blue-800 transition"
           >
-            ← Back to Dashboard
+            ← Home
           </button>
           <UserButton afterSignOutUrl="/" />
         </div>
