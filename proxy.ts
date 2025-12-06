@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in(.*)",
 	"/sign-up(.*)",
 	"/invite(.*)",
+	"/api/games/invite/:inviteId", // Allow GET /api/games/invite/:id (view invite details)
+	"/api/games/invite/decline", // Allow declining invites without auth
 ]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 const isCreateGameRoute = createRouteMatcher(["/create(.*)"]);
