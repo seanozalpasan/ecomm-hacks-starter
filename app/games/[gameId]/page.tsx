@@ -63,6 +63,22 @@ async function sendInvite(gameId: string, email: string) {
   return response.json();
 }
 
+async function createMatchesForGame(gameId: string) {
+  const response = await fetch(`/api/games/${gameId}/match`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create matches');
+  }
+
+  return response.json();
+}
+
 export default function IndividualGamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
   const router = useRouter();
@@ -92,6 +108,22 @@ export default function IndividualGamePage({ params }: GamePageProps) {
     },
   });
 
+  const { mutate: createMatches, isPending: isMatching } = useMutation({
+    mutationFn: () => createMatchesForGame(gameId),
+    onSuccess: (data) => {
+      toast.success('Matches created!', {
+        description: `${data.data.matchCount} participants have been matched`,
+      });
+      // Refetch the game data to update the status
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+    onError: (error) => {
+      toast.error('Failed to create matches', {
+        description: error instanceof Error ? error.message : 'Please try again later',
+      });
+    },
+  });
+
   const [priceLimit, setPriceLimit] = useState('');
   const [deadline, setDeadline] = useState('');
   const [category, setCategory] = useState('');
@@ -114,11 +146,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
   };
 
   const handleMatch = () => {
-    console.log(`Executing match for Game ${gameId}`);
-    toast.success('Matching process initiated!', {
-      description: 'Backend required',
-    });
-    setStatus('Matched');
+    createMatches();
   };
 
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -147,10 +175,14 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
   const isOwner = user?.id && gameData.authorClerkId === user.id;
 
-  // Combine participants and pending invites
+  // Filter out the host from participants and combine with pending invites
   const allPlayers = [
-    ...(gameData.participants || []).map(p => ({ name: p.name, email: p.email, status: 'Accepted' })),
-    ...(gameData.invites || []).filter(i => i.status === 'PENDING').map(i => ({ name: i.email, email: i.email, status: 'Pending' }))
+    ...(gameData.participants || [])
+      .filter(p => p.userId !== gameData.authorId)
+      .map(p => ({ name: p.name, email: p.email, status: 'Accepted' })),
+    ...(gameData.invites || [])
+      .filter(i => i.status === 'PENDING')
+      .map(i => ({ name: i.email, email: i.email, status: 'Pending' }))
   ];
 
   return (
@@ -318,20 +350,28 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
               <button
                 onClick={handleMatch}
-                disabled={!isOwner || status !== 'DRAFT'}
+                disabled={!isOwner || gameData.status !== 'DRAFT' || isMatching}
                 className={`w-full px-6 py-3 rounded-lg font-extrabold text-white transition ${
-                  !isOwner || status !== 'DRAFT'
+                  !isOwner || gameData.status !== 'DRAFT' || isMatching
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
-                Match People and Create Groups
+                {isMatching ? 'Creating Matches...' : 'Match People and Create Groups'}
               </button>
 
-              {status === 'MATCHED' && (
-                  <p className="mt-3 text-center text-green-600 font-medium">
-                      Status: Matched! Assignments have been sent.
-                  </p>
+              {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
+                  <div className="mt-4 space-y-3">
+                      <p className="text-center text-green-600 font-medium">
+                          ✓ Assignments have been created!
+                      </p>
+                      <button
+                          onClick={() => router.push(`/games/${gameId}/match`)}
+                          className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition"
+                      >
+                          View Your Match
+                      </button>
+                  </div>
               )}
             </div>
 

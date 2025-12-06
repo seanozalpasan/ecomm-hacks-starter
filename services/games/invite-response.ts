@@ -1,14 +1,16 @@
 import { db } from "@/lib/db/db";
-import { gameInvites, gameParticipants, users } from "@/lib/db/schema";
+import { gameInvites, gameParticipants, users, games } from "@/lib/db/schema";
 import {
 	type InviteResponseInput,
 	inviteResponseSchema,
 } from "@/schemas/games/invite-response";
 import { eq } from "drizzle-orm";
+import { createMatches } from "./match";
 
 interface InviteResponseResult {
 	message: string;
 	status: "accepted" | "declined";
+	gameId: string;
 }
 
 export async function respondToInvite(
@@ -71,6 +73,9 @@ export async function respondToInvite(
 			gameID: invite[0].gameID,
 			userID: userId,
 		});
+
+		// Check if all invites have been accepted and auto-trigger matching
+		await checkAndAutoMatch(invite[0].gameID);
 	}
 
 	return {
@@ -81,4 +86,53 @@ export async function respondToInvite(
 		status: data.action === "accept" ? "accepted" : "declined",
 		gameId: invite[0].gameID,
 	};
+}
+
+/**
+ * Checks if all invites for a game have been accepted.
+ * If so, automatically triggers the matching process.
+ */
+async function checkAndAutoMatch(gameId: string): Promise<void> {
+	// Get the game details
+	const [game] = await db
+		.select()
+		.from(games)
+		.where(eq(games.id, gameId))
+		.limit(1);
+
+	if (!game) {
+		return; // Game not found, skip auto-matching
+	}
+
+	// Only auto-match if game is still in DRAFT status
+	if (game.status !== "DRAFT") {
+		return;
+	}
+
+	// Check if there are any pending invites
+	const pendingInvites = await db
+		.select()
+		.from(gameInvites)
+		.where(eq(gameInvites.gameID, gameId));
+
+	const hasPendingInvites = pendingInvites.some(
+		(invite) => invite.status === "PENDING",
+	);
+
+	// If all invites have been accepted (no pending invites), trigger matching
+	if (!hasPendingInvites && pendingInvites.length > 0) {
+		try {
+			// Trigger the matching algorithm
+			await createMatches({
+				gameId,
+				userId: game.authorID,
+			});
+			console.log(
+				`Auto-matching triggered for game ${gameId} - all invites accepted`,
+			);
+		} catch (error) {
+			// Log the error but don't fail the invite acceptance
+			console.error(`Failed to auto-match game ${gameId}:`, error);
+		}
+	}
 }

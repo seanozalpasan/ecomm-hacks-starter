@@ -15,7 +15,7 @@ export const gameBasicsSchema = z.object({
 			(value) => value > new Date(),
 			"Deadline must be in the future",
 		),
-	categories: z.array(z.string()).default([]),
+	categories: z.array(z.string()).optional().default([]),
 });
 
 export type GameBasicsInput = z.infer<typeof gameBasicsSchema>;
