@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { getOnboardingData } from "@/lib/utils/storage";
+import { useCompleteOnboarding } from "@/lib/hooks/useOnboarding";
 
 // Christmas candy-cane color scheme - gradient properly contained
 const PILL_STYLES = {
@@ -65,6 +66,7 @@ const TYPING_EXAMPLES = [
 
 export default function InterestsPage() {
 	const router = useRouter();
+	const { mutate: completeOnboarding, isPending } = useCompleteOnboarding();
 	const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 	const [customInterests, setCustomInterests] = useState<string[]>([]);
 	const [customInput, setCustomInput] = useState("");
@@ -153,18 +155,30 @@ export default function InterestsPage() {
 	const handleContinue = () => {
 		const totalSelections = [...selectedInterests, ...customInterests];
 		if (totalSelections.length < 3) {
-			alert("Please select at least 3 interests!");
+			toast.error("Please select at least 3 interests!");
 			return;
 		}
 
-		// Save to localStorage
-		const existingData = JSON.parse(localStorage.getItem("onboarding") || "{}");
-		localStorage.setItem("onboarding", JSON.stringify({
-			...existingData,
-			interests: totalSelections,
-		}));
+		// Get basics data from localStorage
+		const onboardingData = getOnboardingData();
+		if (!onboardingData.basics) {
+			toast.error("Please complete the basics step first");
+			router.push("/onboarding/basics");
+			return;
+		}
 
-		router.push("/onboarding/basics");
+		// Complete onboarding with basics + interests
+		completeOnboarding(
+			{
+				basics: onboardingData.basics,
+				interests: totalSelections,
+			},
+			{
+				onSuccess: () => {
+					router.push("/");
+				},
+			}
+		);
 	};
 
 	const totalSelections = selectedInterests.length + customInterests.length;
@@ -298,10 +312,10 @@ export default function InterestsPage() {
 				<div className="flex justify-center pb-8 px-4">
 					<button
 						onClick={handleContinue}
-						disabled={totalSelections < 3}
+						disabled={totalSelections < 3 || isPending}
 						className="px-12 py-4 bg-gradient-to-r from-red-600 via-green-600 to-red-600 text-white text-lg font-bold rounded-full hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 					>
-						Continue to Next Step
+						{isPending ? "Completing..." : "Complete Onboarding"}
 					</button>
 				</div>
 

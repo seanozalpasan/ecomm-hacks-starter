@@ -4,17 +4,10 @@ import { users } from "@/lib/db/schema";
 import {
 	type BasicsInput,
 	basicsInputSchema,
-	type LikesInput,
-	likesInputSchema,
 } from "@/schemas/onboarding";
 
 type BasicsResult = {
 	data: BasicsInput;
-	message: string;
-};
-
-type LikesResult = {
-	data: LikesInput;
 	message: string;
 };
 
@@ -30,14 +23,7 @@ export type CompleteOnboardingInput = {
 				name: string;
 				location: string;
 		  };
-	likes:
-		| LikesInput
-		| {
-				favoriteColor: string;
-				favoriteHobby: string;
-				favoriteGift: string;
-		  };
-	interests?: string[];
+	interests: string[];
 };
 
 type OnboardingDeps = {
@@ -45,16 +31,11 @@ type OnboardingDeps = {
 };
 
 const BASICS_SAVED_MESSAGE = "Basics information saved successfully";
-const LIKES_SAVED_MESSAGE = "Likes information saved successfully";
 
 function normalizeBasics(
 	input: CompleteOnboardingInput["basics"],
 ): BasicsInput {
 	return basicsInputSchema.parse(input);
-}
-
-function normalizeLikes(input: CompleteOnboardingInput["likes"]): LikesInput {
-	return likesInputSchema.parse(input);
 }
 
 function calculateAge(birthday: Date) {
@@ -69,14 +50,8 @@ function calculateAge(birthday: Date) {
 	return age;
 }
 
-function buildGiftPreferences(likes: LikesInput, interests?: string[]) {
-	const likesArray = [likes.favoriteColor, likes.favoriteHobby, likes.favoriteGift].filter(
-		Boolean,
-	);
-	const interestsArray = interests || [];
-
-	// Merge interests first, then likes (interests are primary)
-	return [...interestsArray, ...likesArray];
+function buildGiftPreferences(interests: string[]): string[] {
+	return interests;
 }
 
 function getDb(dbClient?: OnboardingDbClient): OnboardingDbClient {
@@ -98,9 +73,8 @@ async function findUserByClerkId(
 
 function buildUserData(
 	basics: BasicsInput,
-	likes: LikesInput,
 	email: string,
-	interests?: string[],
+	interests: string[],
 ): {
 	email: string;
 	age: number;
@@ -113,7 +87,7 @@ function buildUserData(
 		age: calculateAge(basics.birthday),
 		name: basics.name,
 		location: basics.location,
-		giftPreferences: buildGiftPreferences(likes, interests),
+		giftPreferences: buildGiftPreferences(interests),
 	};
 }
 
@@ -122,13 +96,6 @@ export function saveBasics(
 ): BasicsResult {
 	const data = normalizeBasics(input);
 	return { data, message: BASICS_SAVED_MESSAGE };
-}
-
-export function saveLikes(
-	input: CompleteOnboardingInput["likes"],
-): LikesResult {
-	const data = normalizeLikes(input);
-	return { data, message: LIKES_SAVED_MESSAGE };
 }
 
 export async function hasCompletedOnboarding(
@@ -153,10 +120,10 @@ export async function completeOnboarding(
 
 	if (!clerkId) throw new Error("Missing Clerk user id");
 	if (!email) throw new Error("Missing user email");
+	if (!interests || interests.length === 0) throw new Error("Missing interests");
 
 	const basics = normalizeBasics(input.basics);
-	const likes = normalizeLikes(input.likes);
-	const updateData = buildUserData(basics, likes, email, interests);
+	const updateData = buildUserData(basics, email, interests);
 
 	const dbClient = getDb(deps.dbClient);
 	const existing = await findUserByClerkId(dbClient, clerkId);
@@ -179,4 +146,4 @@ export async function completeOnboarding(
 	return { user: created, created: true };
 }
 
-export type { BasicsResult, LikesResult };
+export type { BasicsResult };
