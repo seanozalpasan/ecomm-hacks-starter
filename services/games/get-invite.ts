@@ -7,6 +7,7 @@ interface InviteDetails {
 	email: string;
 	status: string;
 	game: {
+		name: string | null;
 		priceLimit: string | null;
 		deadline: Date;
 		categories: string[] | null;
@@ -24,6 +25,7 @@ export async function getInviteDetails(
 			id: gameInvites.id,
 			email: gameInvites.email,
 			status: gameInvites.status,
+			gameName: games.name,
 			priceLimit: games.priceLimit,
 			deadline: games.deadline,
 			categories: games.categories,
@@ -46,6 +48,7 @@ export async function getInviteDetails(
 		email: invite.email,
 		status: invite.status || "PENDING",
 		game: {
+			name: invite.gameName,
 			priceLimit: invite.priceLimit,
 			deadline: invite.deadline,
 			categories: invite.categories,

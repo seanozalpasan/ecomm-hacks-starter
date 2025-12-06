@@ -1,6 +1,6 @@
-import { db } from "@/lib/db/db";
-import { games, users, gameParticipants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { db } from "@/lib/db/db";
+import { gameParticipants, games, users } from "@/lib/db/schema";
 
 export async function getUserGames(clerkUserId: string) {
 	// Get the user's database ID from their Clerk ID
@@ -26,6 +26,7 @@ export async function getUserGames(clerkUserId: string) {
 			status: games.status,
 			authorId: games.authorID,
 			authorName: users.name,
+			name: games.name,
 		})
 		.from(gameParticipants)
 		.innerJoin(games, eq(gameParticipants.gameID, games.id))

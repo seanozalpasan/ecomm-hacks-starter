@@ -2,9 +2,11 @@
 
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, Minus } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Navbar } from "@/components/navbar";
 import { SearchLoading } from "@/components/search-loading";
@@ -38,6 +40,24 @@ function HomeContent() {
 		queryKey: ["userGames"],
 		queryFn: fetchUserGames,
 	});
+	const [showPastGames, setShowPastGames] = useState(false);
+
+	const { activeGames, pastGames } = useMemo(() => {
+		if (!games) return { activeGames: [], pastGames: [] };
+
+		const active: Game[] = [];
+		const past: Game[] = [];
+
+		games.forEach((game) => {
+			if (game.status === "COMPLETED") {
+				past.push(game);
+			} else {
+				active.push(game);
+			}
+		});
+
+		return { activeGames: active, pastGames: past };
+	}, [games]);
 
 	useEffect(() => {
 		const onboardingRedirect = searchParams.get("onboarding_redirect");
@@ -81,7 +101,7 @@ function HomeContent() {
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-2">
 								<Logo />
-								<h1 className="text-4xl font-bold text-black dark:text-white mb-2">
+								<h1 className="text-3xl font-bold text-black dark:text-white mb-2">
 									Unwrappd
 								</h1>
 							</div>
@@ -107,36 +127,134 @@ function HomeContent() {
 									Loading your games...
 								</p>
 							</div>
-						) : games && games.length > 0 ? (
-							<div className="grid gap-4">
-								{games.map((game) => (
-									<Link
-										key={game.id}
-										href={`/games/${game.id}`}
-										className="block"
-									>
-										<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-											<div className="flex justify-between items-center">
-												<div>
-													<h3 className="text-lg font-bold text-black dark:text-white mb-1">
-														{game.name}
-													</h3>
-													<p className="text-sm text-black dark:text-gray-300">
-														Due
-														{new Date(game.deadline).toLocaleDateString(
-															"en-US",
-															{
-																day: "numeric",
-																month: "long",
-															},
-														)}
-													</p>
+						) : activeGames.length > 0 || pastGames.length > 0 ? (
+							<>
+								{/* Active Games */}
+								{activeGames.length > 0 && (
+									<div className="grid gap-4 mb-6">
+										{activeGames.map((game) => (
+											<Link
+												key={game.id}
+												href={`/games/${game.id}`}
+												className="block"
+											>
+												<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+													<div className="flex justify-between items-center">
+														<div>
+															<h3 className="text-lg font-bold text-black dark:text-white mb-1">
+																{game.name}
+															</h3>
+															<p className="text-sm text-black dark:text-gray-300">
+																Buy in time for{" "}
+																<b>
+																	{new Date(game.deadline).toLocaleDateString(
+																		"en-US",
+																		{
+																			day: "numeric",
+																			month: "long",
+																		},
+																	)}
+																</b>
+															</p>
+														</div>
+													</div>
 												</div>
+											</Link>
+										))}
+									</div>
+								)}
+
+								{/* Past Games Dropdown */}
+								{pastGames.length > 0 && (
+									<div className="border-t border-gray-200 dark:border-zinc-700 pt-6">
+										<button
+											type="button"
+											onClick={() => setShowPastGames(!showPastGames)}
+											className="w-full flex items-center justify-between mb-4 hover:opacity-80 transition-opacity"
+											aria-expanded={showPastGames}
+											aria-label={
+												showPastGames ? "Hide past games" : "Show past games"
+											}
+										>
+											<h3 className="text-xl font-bold text-black dark:text-white">
+												Previous
+											</h3>
+											<div className="relative w-5 h-5 inline-flex items-center justify-center">
+												<motion.div
+													animate={{
+														opacity: showPastGames ? 0 : 1,
+														scale: showPastGames ? 0.6 : 1,
+													}}
+													transition={{
+														duration: 0.3,
+														ease: [0.4, 0, 0.2, 1],
+													}}
+													className="absolute"
+												>
+													<ChevronDown className="w-5 h-5 text-black dark:text-white" />
+												</motion.div>
+												<motion.div
+													animate={{
+														opacity: showPastGames ? 1 : 0,
+														scale: showPastGames ? 1 : 0.6,
+													}}
+													transition={{
+														duration: 0.3,
+														ease: [0.4, 0, 0.2, 1],
+													}}
+													className="absolute"
+												>
+													<Minus className="w-5 h-5 text-black dark:text-white" />
+												</motion.div>
 											</div>
-										</div>
-									</Link>
-								))}
-							</div>
+										</button>
+
+										{showPastGames && (
+											<motion.div
+												initial={{ opacity: 0, height: 0 }}
+												animate={{ opacity: 1, height: "auto" }}
+												exit={{ opacity: 0, height: 0 }}
+												transition={{
+													duration: 0.3,
+													ease: [0.4, 0, 0.2, 1],
+												}}
+												className="overflow-hidden"
+											>
+												<div className="grid gap-4">
+													{pastGames.map((game) => (
+														<Link
+															key={game.id}
+															href={`/games/${game.id}`}
+															className="block"
+														>
+															<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+																<div className="flex justify-between items-center">
+																	<div>
+																		<h3 className="text-lg font-bold text-black dark:text-white mb-1">
+																			{game.name}
+																		</h3>
+																		<p className="text-sm text-black dark:text-gray-300">
+																			Due{" "}
+																			<b>
+																				{new Date(
+																					game.deadline,
+																				).toLocaleDateString("en-US", {
+																					day: "numeric",
+																					month: "long",
+																				})}
+																			</b>
+																		</p>
+																	</div>
+																</div>
+															</div>
+														</Link>
+													))}
+												</div>
+											</motion.div>
+										)}
+									</div>
+								)}
+							</>
 						) : (
 							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-12 text-center">
 								<p className="text-gray-600 dark:text-gray-300 mb-4">
