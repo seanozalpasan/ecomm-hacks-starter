@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { basicsInputSchema, likesInputSchema } from "@/schemas/onboarding";
+import { basicsInputSchema } from "@/schemas/onboarding";
 import {
 	type CompleteOnboardingInput,
 	completeOnboarding,
@@ -14,11 +14,6 @@ const payloadSchema = z.object({
 		name: z.string(),
 		location: z.string(),
 	}),
-	likes: z.object({
-		favoriteColor: z.string(),
-		favoriteHobby: z.string(),
-		favoriteGift: z.string(),
-	}).optional(),
 	interests: z.array(z.string()).optional(),
 });
 
@@ -50,23 +45,10 @@ export async function POST(request: NextRequest) {
 			birthday: new Date(parsed.basics.birthday),
 		});
 
-		// Use default values for likes if not provided
-		const likesData: { favoriteColor: string; favoriteHobby: string; favoriteGift: string } =
-			parsed.likes ?? {
-				favoriteColor: "",
-				favoriteHobby: "",
-				favoriteGift: "",
-			};
-
-		if (parsed.likes) {
-			likesInputSchema.parse(parsed.likes);
-		}
-
 		const input: CompleteOnboardingInput = {
 			clerkId: userId,
 			email,
 			basics: parsed.basics,
-			likes: likesData,
 			interests: parsed.interests,
 		};
 

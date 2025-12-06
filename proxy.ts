@@ -14,7 +14,6 @@ const isOnboardingRoute = createRouteMatcher([
 	"/onboarding",
 	"/onboarding/basics",
 	"/onboarding/interests",
-	"/onboarding/likes(.*)",
 ]);
 const isOnboardingApiRoute = createRouteMatcher(["/api/onboarding(.*)"]);
 

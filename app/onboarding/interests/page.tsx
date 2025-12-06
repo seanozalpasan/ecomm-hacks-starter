@@ -292,14 +292,6 @@ export default function InterestsPage() {
 			localStorage.setItem("onboarding", JSON.stringify(updatedData));
 
 			// Complete onboarding
-			const likesData = saved.likes
-				? {
-						favoriteColor: saved.likes[1] || "",
-						favoriteHobby: saved.likes[2] || "",
-						favoriteGift: saved.likes[3] || "",
-				  }
-				: undefined;
-
 			const completeResponse = await fetch("/api/onboarding/complete", {
 				method: "POST",
 				headers: {
@@ -307,7 +299,6 @@ export default function InterestsPage() {
 				},
 				body: JSON.stringify({
 					basics: saved.basics,
-					...(likesData && { likes: likesData }),
 					interests: totalSelections,
 				}),
 			});
