@@ -37,13 +37,13 @@ export const gameParticipants = pgTable('game_participants', {
 }));
 
 // UserMatches table
-export const userMatches = pgTable('user_matches', {
+export const gameUserMatches = pgTable('game_user_matches', {
   gameID: uuid('game_id').notNull().references(() => games.id, { onDelete: 'cascade' }),
-  userID: uuid('user_id').notNull().references(() => users.id),
-  targetID: uuid('target_id').notNull().references(() => users.id),
+  buyerID: uuid('user_id').notNull().references(() => users.id),
+  recipientID: uuid('target_id').notNull().references(() => users.id),
 }, (table) => ({
   pk: {
-    columns: [table.gameID, table.userID],
+    columns: [table.gameID, table.buyerID],
   },
 }));
 
@@ -51,7 +51,7 @@ export const userMatches = pgTable('user_matches', {
 export const usersRelations = relations(users, ({ many }) => ({
   gamesAuthored: many(games),
   gameParticipations: many(gameParticipants),
-  matches: many(userMatches),
+  matches: many(gameUserMatches),
 }));
 
 export const gamesRelations = relations(games, ({ one, many }) => ({
@@ -60,7 +60,7 @@ export const gamesRelations = relations(games, ({ one, many }) => ({
     references: [users.id],
   }),
   participants: many(gameParticipants),
-  matches: many(userMatches),
+  matches: many(gameUserMatches),
 }));
 
 export const gameParticipantsRelations = relations(gameParticipants, ({ one }) => ({
@@ -74,17 +74,17 @@ export const gameParticipantsRelations = relations(gameParticipants, ({ one }) =
   }),
 }));
 
-export const userMatchesRelations = relations(userMatches, ({ one }) => ({
+export const userMatchesRelations = relations(gameUserMatches, ({ one }) => ({
   game: one(games, {
-    fields: [userMatches.gameID],
+    fields: [gameUserMatches.gameID],
     references: [games.id],
   }),
   giver: one(users, {
-    fields: [userMatches.userID],
+    fields: [gameUserMatches.buyerID],
     references: [users.id],
   }),
   receiver: one(users, {
-    fields: [userMatches.targetID],
+    fields: [gameUserMatches.recipientID],
     references: [users.id],
   }),
 }));
