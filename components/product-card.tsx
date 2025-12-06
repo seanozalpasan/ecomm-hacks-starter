@@ -9,6 +9,18 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, className }: ProductCardProps) {
+  // Get the first available image
+  const productImage = product.images && product.images.length > 0
+    ? product.images[0]
+    : product.imageUrl || null;
+
+  // Check if price is $0.00 or invalid
+  const isPriceUnavailable = product.price === "$0.00" ||
+    product.price === "0.00" ||
+    product.price === "$0" ||
+    product.price === "0" ||
+    !product.price;
+
   return (
     <a
       href={product.url}
@@ -22,10 +34,10 @@ export function ProductCard({ product, className }: ProductCardProps) {
       )}
     >
       <div className="flex gap-4">
-        {product.imageUrl ? (
+        {productImage ? (
           <div className="shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted">
             <img
-              src={product.imageUrl}
+              src={productImage}
               alt={product.title}
               className="w-full h-full object-cover"
               onError={(event) => {
@@ -41,7 +53,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -66,8 +78,26 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
             {product.description}
           </p>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">{product.price}</span>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex flex-col gap-0.5">
+              {isPriceUnavailable ? (
+                <span className="text-sm text-muted-foreground">
+                  Unable to find price, visit product page.
+                </span>
+              ) : (
+                <span className="text-sm font-semibold">{product.price}</span>
+              )}
+              {product.deliveryDate && (
+                <span className="text-xs text-muted-foreground">
+                  Arrives: {product.deliveryDate}
+                </span>
+              )}
+              {!product.deliveryDate && product.daysToShip && (
+                <span className="text-xs text-muted-foreground">
+                  Ships in {product.daysToShip} days
+                </span>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground group-hover:text-ring transition-colors">
               View product →
             </span>
