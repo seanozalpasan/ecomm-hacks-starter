@@ -18,7 +18,7 @@ const payloadSchema = z.object({
 		favoriteColor: z.string(),
 		favoriteHobby: z.string(),
 		favoriteGift: z.string(),
-	}),
+	}).optional(),
 	interests: z.array(z.string()).optional(),
 });
 
@@ -49,13 +49,24 @@ export async function POST(request: NextRequest) {
 			...parsed.basics,
 			birthday: new Date(parsed.basics.birthday),
 		});
-		likesInputSchema.parse(parsed.likes);
+
+		// Use default values for likes if not provided
+		const likesData: { favoriteColor: string; favoriteHobby: string; favoriteGift: string } =
+			parsed.likes ?? {
+				favoriteColor: "",
+				favoriteHobby: "",
+				favoriteGift: "",
+			};
+
+		if (parsed.likes) {
+			likesInputSchema.parse(parsed.likes);
+		}
 
 		const input: CompleteOnboardingInput = {
 			clerkId: userId,
 			email,
 			basics: parsed.basics,
-			likes: parsed.likes,
+			likes: likesData,
 			interests: parsed.interests,
 		};
 

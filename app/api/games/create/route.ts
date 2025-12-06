@@ -3,12 +3,19 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createGameSchema } from "@/schemas/games/create";
 import { createGame } from "@/services/games/create";
+import { requireOnboarding } from "@/lib/utils/api-auth";
 
 export async function POST(request: NextRequest) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Check if user has completed onboarding
+		const onboardingError = await requireOnboarding(userId);
+		if (onboardingError) {
+			return onboardingError;
 		}
 
 		const body = await request.json();

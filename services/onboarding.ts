@@ -30,7 +30,7 @@ export type CompleteOnboardingInput = {
 				name: string;
 				location: string;
 		  };
-	likes:
+	likes?:
 		| LikesInput
 		| {
 				favoriteColor: string;
@@ -69,11 +69,17 @@ function calculateAge(birthday: Date) {
 	return age;
 }
 
-function buildGiftPreferences(likes: LikesInput, interests?: string[]) {
+function buildGiftPreferences(likes: LikesInput | undefined, interests?: string[]) {
+	const interestsArray = interests || [];
+
+	// If no likes data, just return interests
+	if (!likes) {
+		return interestsArray;
+	}
+
 	const likesArray = [likes.favoriteColor, likes.favoriteHobby, likes.favoriteGift].filter(
 		Boolean,
 	);
-	const interestsArray = interests || [];
 
 	// Merge interests first, then likes (interests are primary)
 	return [...interestsArray, ...likesArray];
@@ -98,7 +104,7 @@ async function findUserByClerkId(
 
 function buildUserData(
 	basics: BasicsInput,
-	likes: LikesInput,
+	likes: LikesInput | undefined,
 	email: string,
 	interests?: string[],
 ): {
@@ -155,7 +161,7 @@ export async function completeOnboarding(
 	if (!email) throw new Error("Missing user email");
 
 	const basics = normalizeBasics(input.basics);
-	const likes = normalizeLikes(input.likes);
+	const likes = input.likes ? normalizeLikes(input.likes) : undefined;
 	const updateData = buildUserData(basics, likes, email, interests);
 
 	const dbClient = getDb(deps.dbClient);

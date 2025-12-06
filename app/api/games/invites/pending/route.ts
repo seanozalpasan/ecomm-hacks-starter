@@ -1,12 +1,19 @@
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { getPendingInvites } from "@/services/games/get-pending-invites";
+import { requireOnboarding } from "@/lib/utils/api-auth";
 
 export async function GET(request: NextRequest) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Check if user has completed onboarding
+		const onboardingError = await requireOnboarding(userId);
+		if (onboardingError) {
+			return onboardingError;
 		}
 
 		const invites = await getPendingInvites(userId);

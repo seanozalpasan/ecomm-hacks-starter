@@ -71,6 +71,7 @@ export default function InterestsPage() {
 	const [placeholderText, setPlaceholderText] = useState("");
 	const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Smooth typing and deleting animation
 	useEffect(() => {
@@ -150,21 +151,75 @@ export default function InterestsPage() {
 		setCustomInterests(customInterests.filter((i) => i !== interest));
 	};
 
-	const handleContinue = () => {
+	const handleContinue = async () => {
 		const totalSelections = [...selectedInterests, ...customInterests];
 		if (totalSelections.length < 3) {
 			alert("Please select at least 3 interests!");
 			return;
 		}
 
-		// Save to localStorage
-		const existingData = JSON.parse(localStorage.getItem("onboarding") || "{}");
-		localStorage.setItem("onboarding", JSON.stringify({
-			...existingData,
-			interests: totalSelections,
-		}));
+		setIsSubmitting(true);
 
-		router.push("/onboarding/basics");
+		try {
+			// Get existing onboarding data
+			const saved = getOnboardingData();
+
+			if (!saved.basics) {
+				toast.error("Please complete the basics step first");
+				router.push("/onboarding/basics");
+				return;
+			}
+
+			// Save interests to localStorage
+			const updatedData = {
+				...saved,
+				interests: totalSelections,
+			};
+			localStorage.setItem("onboarding", JSON.stringify(updatedData));
+
+			// Complete onboarding
+			const likesData = saved.likes
+				? {
+						favoriteColor: saved.likes[1] || "",
+						favoriteHobby: saved.likes[2] || "",
+						favoriteGift: saved.likes[3] || "",
+				  }
+				: undefined;
+
+			const completeResponse = await fetch("/api/onboarding/complete", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					basics: saved.basics,
+					...(likesData && { likes: likesData }),
+					interests: totalSelections,
+				}),
+			});
+
+			if (!completeResponse.ok) {
+				const error = await completeResponse.json();
+				throw new Error(error.error || "Failed to complete onboarding");
+			}
+
+			toast.success("Onboarding completed!", {
+				description: "Welcome to the app!",
+			});
+
+			// Clear onboarding data from localStorage
+			localStorage.removeItem("onboarding");
+
+			// Redirect to root
+			router.push("/");
+		} catch (error) {
+			console.error("Error completing onboarding:", error);
+			toast.error("Failed to complete onboarding", {
+				description: error instanceof Error ? error.message : "Please try again",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const totalSelections = selectedInterests.length + customInterests.length;
@@ -298,10 +353,10 @@ export default function InterestsPage() {
 				<div className="flex justify-center pb-8 px-4">
 					<button
 						onClick={handleContinue}
-						disabled={totalSelections < 3}
+						disabled={totalSelections < 3 || isSubmitting}
 						className="px-12 py-4 bg-gradient-to-r from-red-600 via-green-600 to-red-600 text-white text-lg font-bold rounded-full hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 					>
-						Continue to Next Step
+						{isSubmitting ? "Completing..." : "Continue to Next Step"}
 					</button>
 				</div>
 

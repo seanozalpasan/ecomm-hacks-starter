@@ -3,12 +3,19 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { inviteResponseSchema } from "@/schemas/games/invite-response";
 import { respondToInvite } from "@/services/games/invite-response";
+import { requireOnboarding } from "@/lib/utils/api-auth";
 
 export async function POST(request: NextRequest) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Check if user has completed onboarding
+		const onboardingError = await requireOnboarding(userId);
+		if (onboardingError) {
+			return onboardingError;
 		}
 
 		const body = await request.json();

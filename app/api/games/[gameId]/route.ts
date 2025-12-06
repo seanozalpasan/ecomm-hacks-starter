@@ -4,6 +4,7 @@ import { z } from "zod";
 import { updateGameSchema } from "@/schemas/games/update";
 import { getGameDetails } from "@/services/games/get-game";
 import { updateGame } from "@/services/games/update";
+import { requireOnboarding } from "@/lib/utils/api-auth";
 
 export async function GET(
 	request: NextRequest,
@@ -13,6 +14,12 @@ export async function GET(
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Check if user has completed onboarding
+		const onboardingError = await requireOnboarding(userId);
+		if (onboardingError) {
+			return onboardingError;
 		}
 
 		const { gameId } = await params;
@@ -54,6 +61,12 @@ export async function PATCH(
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Check if user has completed onboarding
+		const onboardingError = await requireOnboarding(userId);
+		if (onboardingError) {
+			return onboardingError;
 		}
 
 		const { gameId } = await params;

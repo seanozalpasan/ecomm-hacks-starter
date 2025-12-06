@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { inviteId: string } },
+	{ params }: { params: Promise<{ inviteId: string }> },
 ) {
 	try {
 		if (!process.env.GEMINI_API_KEY) {
@@ -17,7 +17,7 @@ export async function GET(
 			);
 		}
 
-		const inviteId = params.inviteId;
+		const { inviteId } = await params;
 
 		// Fetch invite details to personalize the postcard
 		const inviteResponse = await fetch(
