@@ -6,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ProductCardList } from "@/components/product-card-list";
 import { type GiftSearchInput, giftSearchInputSchema } from "@/schemas/gifts";
-import { searchGifts, type GiftSuggestion } from "@/lib/api/searchGifts";
+import { searchGifts, type ProductResult } from "@/lib/api/searchGifts";
 import { users } from "@/lib/db/schema";
 
 type GiftSearchForm = GiftSearchInput;
@@ -27,7 +28,7 @@ export function GiftSearchClient({
 }: GiftSearchClientProps) {
   const idPrefix = useId();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [suggestions, setSuggestions] = useState<GiftSuggestion[]>([]);
+  const [products, setProducts] = useState<ProductResult[]>([]);
   const {
     register,
     handleSubmit,
@@ -45,17 +46,17 @@ export function GiftSearchClient({
     setIsSubmitting(true);
     try {
       const result = await searchGifts(data);
-      setSuggestions(result.giftSuggestions);
+      setProducts(result.products);
     } catch (error) {
       console.error("Error searching gifts:", error);
-      setSuggestions([]);
+      setProducts([]);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full max-w-2xl space-y-8">
+    <div className="w-full max-w-3xl space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-2xl font-semibold">
           You are getting a gift for {user.name}!
@@ -115,39 +116,10 @@ export function GiftSearchClient({
         </Button>
       </form>
 
-      {suggestions.length > 0 && (
+      {products.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">
-            Suggested Gift Categories
-          </h2>
-          <ul className="space-y-4">
-            {suggestions.map((suggestion, index) => (
-              <li
-                key={index}
-                className="p-4 rounded-lg border border-border bg-card"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium text-base">
-                        {suggestion.searchQuery}
-                      </h3>
-                      {suggestion.category && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                          {suggestion.category}
-                        </span>
-                      )}
-                    </div>
-                    {suggestion.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {suggestion.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-lg font-semibold mb-4">Recommended Products</h2>
+          <ProductCardList products={products} />
         </div>
       )}
     </div>
