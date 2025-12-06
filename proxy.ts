@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { hasCompletedOnboarding } from "@/services/onboarding/check";
+import { hasCompletedOnboarding } from "@/services/onboarding";
 
 const isPublicRoute = createRouteMatcher([
 	"/",

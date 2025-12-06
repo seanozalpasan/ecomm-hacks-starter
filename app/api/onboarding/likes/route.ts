@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { likesInputSchema } from "@/schemas/onboarding/likes";
-import { saveLikes } from "@/services/onboarding/likes";
+import { likesInputSchema } from "@/schemas/onboarding";
+import { saveLikes } from "@/services/onboarding";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
 		const body = await request.json();
 		const validatedData = likesInputSchema.parse(body);
-		const result = await saveLikes(validatedData);
+		const result = saveLikes(validatedData);
 
 		return NextResponse.json(
 			{

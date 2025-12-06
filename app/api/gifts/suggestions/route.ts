@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { generateGiftSuggestions } from "@/services/gifts/suggestions";
+import { generateGiftSuggestions } from "@/services/gifts";
 
 export async function POST(request: NextRequest) {
 	const requestId = crypto.randomUUID();

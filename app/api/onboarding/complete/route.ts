@@ -2,12 +2,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { basicsInputSchema } from "@/schemas/onboarding/basics";
-import { likesInputSchema } from "@/schemas/onboarding/likes";
+import { basicsInputSchema, likesInputSchema } from "@/schemas/onboarding";
 import {
 	type CompleteOnboardingInput,
 	completeOnboarding,
-} from "@/services/onboarding/complete";
+} from "@/services/onboarding";
 
 const payloadSchema = z.object({
 	basics: z.object({

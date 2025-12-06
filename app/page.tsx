@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { toast } from "sonner";
 import { SearchLoading } from "@/components/search-loading";
+import { Logo } from "@/components/ui/logo";
 
 function HomeContent() {
 	const searchParams = useSearchParams();
@@ -18,7 +19,12 @@ function HomeContent() {
 		}
 	}, [searchParams]);
 
-	return <SearchLoading />;
+	return (
+		<div>
+			<Logo />
+			<h1 className="text-2xl font-bold">Unwrappd</h1>
+		</div>
+	);
 }
 
 export default function Home() {
