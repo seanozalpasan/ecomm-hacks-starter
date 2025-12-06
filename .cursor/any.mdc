@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+This is a hackathon project secret santa where people sign up, give some basic inforamtion and then create a secret santa game where they invite people to join.
+
+- Always use these technologies:
+  - pnpm for installing packages
+  - TailwindCSS
+  - Drizzle
+  - Zod for validation
+  - Gemini API for AI calls
+  - Tanstack Query for data fetching
+  - React hook form
+  - Shadcn
