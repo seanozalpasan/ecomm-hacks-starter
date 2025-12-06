@@ -1,36 +1,55 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useId, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
 	Field,
 	FieldContent,
 	FieldError,
 	FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { useSubmitBasics } from "@/lib/hooks/useOnboarding";
-import { cn } from "@/lib/utils";
 import { getOnboardingData } from "@/lib/utils/storage";
-import { basicsInputSchema } from "@/schemas/onboarding/basics";
 
-const basicsSchema = basicsInputSchema;
+const basicsFormSchema = z.object({
+	birthday: z.date().optional(),
+	name: z.string().min(1, "Name is required").max(100, "Name is too long"),
+	location: z
+		.string()
+		.min(1, "Location is required")
+		.max(200, "Location is too long"),
+});
 
-type BasicsFormData = z.infer<typeof basicsSchema>;
+type BasicsFormData = z.infer<typeof basicsFormSchema>;
 
 export default function BasicsPage() {
 	const router = useRouter();
 	const { mutate: submitBasics, isPending } = useSubmitBasics();
 	const idPrefix = useId();
+	const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+	const [locationError, setLocationError] = useState<string | null>(null);
+	const [calendarOpen, setCalendarOpen] = useState(false);
 
 	const {
 		register,
 		handleSubmit,
+		control,
 		formState: { errors },
 		setValue,
 	} = useForm<BasicsFormData>({
-		resolver: zodResolver(basicsSchema),
+		resolver: zodResolver(basicsFormSchema),
 		defaultValues: {
 			birthday: undefined,
 			name: "",
@@ -51,11 +70,60 @@ export default function BasicsPage() {
 	}, [setValue]);
 
 	const onSubmit = (data: BasicsFormData) => {
-		submitBasics(data, {
-			onSuccess: () => {
-				router.push("/onboarding/likes");
+		if (!data.birthday) {
+			return;
+		}
+		submitBasics(
+			{
+				birthday: data.birthday,
+				name: data.name,
+				location: data.location,
 			},
-		});
+			{
+				onSuccess: () => {
+					router.push("/onboarding/likes");
+				},
+			},
+		);
+	};
+
+	const handleUseCurrentLocation = async () => {
+		setLocationError(null);
+		setIsFetchingLocation(true);
+
+		try {
+			const position = await new Promise<GeolocationPosition>(
+				(resolve, reject) => {
+					navigator.geolocation.getCurrentPosition(resolve, reject, {
+						enableHighAccuracy: true,
+						timeout: 10_000,
+					});
+				},
+			);
+
+			const { latitude, longitude } = position.coords;
+			const response = await fetch(
+				`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to look up location");
+			}
+
+			const data = await response.json();
+			const formattedLocation =
+				data?.display_name ?? `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+
+			setValue("location", formattedLocation);
+		} catch (error) {
+			setLocationError(
+				error instanceof Error
+					? error.message
+					: "Unable to fetch your location. Please enter it manually.",
+			);
+		} finally {
+			setIsFetchingLocation(false);
+		}
 	};
 
 	return (
@@ -71,19 +139,12 @@ export default function BasicsPage() {
 				<Field>
 					<FieldLabel htmlFor={`${idPrefix}-name`}>Name</FieldLabel>
 					<FieldContent>
-						<input
+						<Input
 							id={`${idPrefix}-name`}
 							type="text"
 							{...register("name")}
-							className={cn(
-								"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-								"placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50",
-								errors.name && "border-destructive",
-							)}
 							placeholder="Enter your name"
+							aria-invalid={errors.name ? "true" : "false"}
 						/>
 						<FieldError errors={errors.name ? [errors.name] : []} />
 					</FieldContent>
@@ -92,19 +153,47 @@ export default function BasicsPage() {
 				<Field>
 					<FieldLabel htmlFor={`${idPrefix}-birthday`}>Birthday</FieldLabel>
 					<FieldContent>
-						<input
-							id={`${idPrefix}-birthday`}
-							type="date"
-							{...register("birthday", { valueAsDate: true })}
-							className={cn(
-								"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-								"placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50",
-								errors.birthday && "border-destructive",
+						<Controller
+							name="birthday"
+							control={control}
+							render={({ field }) => (
+								<Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+									<PopoverTrigger asChild>
+										<Button
+											id={`${idPrefix}-birthday`}
+											variant="outline"
+											className="w-full justify-between font-normal"
+											aria-invalid={errors.birthday ? "true" : "false"}
+										>
+											{field.value
+												? field.value.toLocaleDateString("en-US", {
+														year: "numeric",
+														month: "2-digit",
+														day: "2-digit",
+													})
+												: "Select date"}
+											<ChevronDownIcon className="size-4 opacity-50" />
+										</Button>
+									</PopoverTrigger>
+									<PopoverContent className="w-auto p-0" align="start">
+										<Calendar
+											mode="single"
+											selected={field.value}
+											onSelect={(date) => {
+												if (date) {
+													field.onChange(date);
+													setCalendarOpen(false);
+												}
+											}}
+											disabled={(date) => date > new Date()}
+											captionLayout="dropdown"
+											fromYear={1900}
+											toYear={new Date().getFullYear()}
+											initialFocus
+										/>
+									</PopoverContent>
+								</Popover>
 							)}
-							placeholder="Select your birthday"
 						/>
 						<FieldError errors={errors.birthday ? [errors.birthday] : []} />
 					</FieldContent>
@@ -113,20 +202,32 @@ export default function BasicsPage() {
 				<Field>
 					<FieldLabel htmlFor={`${idPrefix}-location`}>Location</FieldLabel>
 					<FieldContent>
-						<input
-							id={`${idPrefix}-location`}
-							type="text"
-							{...register("location")}
-							className={cn(
-								"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-								"placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50",
-								errors.location && "border-destructive",
-							)}
-							placeholder="Enter your location"
-						/>
+						<div className="flex flex-col gap-2">
+							<Input
+								id={`${idPrefix}-location`}
+								type="text"
+								{...register("location")}
+								placeholder="Enter your location"
+								aria-invalid={errors.location ? "true" : "false"}
+							/>
+							<div className="flex items-center gap-3">
+								<button
+									type="button"
+									onClick={handleUseCurrentLocation}
+									disabled={isFetchingLocation}
+									className="text-sm text-zinc-700 dark:text-zinc-300 underline underline-offset-4 disabled:opacity-60 disabled:cursor-not-allowed"
+								>
+									{isFetchingLocation
+										? "Fetching location..."
+										: "Use current location"}
+								</button>
+								{locationError && (
+									<span className="text-xs text-red-600 dark:text-red-400">
+										{locationError}
+									</span>
+								)}
+							</div>
+						</div>
 						<FieldError errors={errors.location ? [errors.location] : []} />
 					</FieldContent>
 				</Field>

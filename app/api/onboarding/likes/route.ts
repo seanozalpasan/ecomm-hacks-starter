@@ -1,12 +1,19 @@
+import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { likesInputSchema } from "@/schemas/onboarding/likes";
-import { saveLikes } from "@/services/onboarding/likes";
+import { z } from "zod";
+import { likesInputSchema } from "@/schemas/onboarding";
+import { saveLikes } from "@/services/onboarding";
 
 export async function POST(request: NextRequest) {
 	try {
+		const { userId } = await auth();
+		if (!userId) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const validatedData = likesInputSchema.parse(body);
-		const result = await saveLikes(validatedData);
+		const result = saveLikes(validatedData);
 
 		return NextResponse.json(
 			{

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { saveOnboardingData } from "@/lib/utils/storage";
+import { toast } from "sonner";
+import { getOnboardingData, saveOnboardingData } from "@/lib/utils/storage";
 
 interface BasicsData {
 	birthday: Date;
@@ -33,7 +34,7 @@ async function submitBasics(data: BasicsData) {
 }
 
 async function submitLikes(data: LikesData) {
-	const response = await fetch("/api/onboarding/likes", {
+	const likesResponse = await fetch("/api/onboarding/likes", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -41,12 +42,35 @@ async function submitLikes(data: LikesData) {
 		body: JSON.stringify(data),
 	});
 
-	if (!response.ok) {
-		const error = await response.json();
+	if (!likesResponse.ok) {
+		const error = await likesResponse.json();
 		throw new Error(error.error || "Failed to submit likes");
 	}
 
-	return response.json();
+	const saved = getOnboardingData();
+	if (!saved.basics) {
+		throw new Error(
+			"Basics step missing. Please complete basics before likes.",
+		);
+	}
+
+	const completeResponse = await fetch("/api/onboarding/complete", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			basics: saved.basics,
+			likes: data,
+		}),
+	});
+
+	if (!completeResponse.ok) {
+		const error = await completeResponse.json();
+		throw new Error(error.error || "Failed to complete onboarding");
+	}
+
+	return completeResponse.json();
 }
 
 export function useSubmitBasics() {
@@ -73,6 +97,15 @@ export function useSubmitLikes() {
 					2: variables.favoriteHobby,
 					3: variables.favoriteGift,
 				},
+			});
+			toast.success("Onboarding completed!", {
+				description: "Your profile has been created successfully.",
+			});
+		},
+		onError: (error) => {
+			toast.error("Failed to complete onboarding", {
+				description:
+					error instanceof Error ? error.message : "Please try again.",
 			});
 		},
 	});
