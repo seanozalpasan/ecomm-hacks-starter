@@ -27,7 +27,9 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-function buildPrompt(query: string, recipient: RecipientProfile) {
+function buildPrompt(query: string, recipient: RecipientProfile, priceLimit?: string | null) {
+  const priceLimitText = priceLimit ? `\n- Price Limit: $${priceLimit}` : "";
+
   return `${giftSuggestionsPrompt}
 
 Recipient Information:
@@ -38,22 +40,30 @@ Recipient Information:
   - Music: ${recipient.preferences.music.join(", ")}
   - Books: ${recipient.preferences.books.join(", ")}
   - Movies: ${recipient.preferences.movies.join(", ")}
-- Additional Info: ${recipient.additionalInfo}
+- Additional Info: ${recipient.additionalInfo}${priceLimitText}
 
 User Query: ${query}
 
-Please provide 3-5 specific search query suggestions that match the recipient's interests and preferences.`;
+Please provide 3-5 specific search query suggestions that match the recipient's interests and preferences.${priceLimit ? ` All suggestions should respect the price limit of $${priceLimit}.` : ""}`;
 }
 
 export async function generateGiftSuggestions({
   query,
   userId,
+  gameId,
+  priceLimit,
 }: {
   query: string;
   userId: string;
+  gameId: string;
+  priceLimit?: string | null;
 }) {
   if (!query) {
     throw new Error("Query is required");
+  }
+
+  if (!gameId) {
+    throw new Error("Game ID is required");
   }
 
   // Prefer real user data when available; fall back to placeholder profile.
@@ -75,7 +85,7 @@ export async function generateGiftSuggestions({
       }
     : winstonProfileData;
 
-  const fullPrompt = buildPrompt(query, recipient);
+  const fullPrompt = buildPrompt(query, recipient, priceLimit);
 
   const aiResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash",

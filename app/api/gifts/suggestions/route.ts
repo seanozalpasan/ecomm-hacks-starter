@@ -23,13 +23,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { query } = body ?? {};
+    const { query, gameId, priceLimit } = body ?? {};
 
     if (!query) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
     }
 
-    const result = await generateGiftSuggestions({ query, userId });
+    if (!gameId) {
+      return NextResponse.json({ error: "Game ID is required" }, { status: 400 });
+    }
+
+    const result = await generateGiftSuggestions({ query, userId, gameId, priceLimit });
 
     return NextResponse.json<GiftSuggestionsResponse>(
       {

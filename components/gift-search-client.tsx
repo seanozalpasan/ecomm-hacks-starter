@@ -16,9 +16,15 @@ type User = typeof users.$inferSelect;
 
 type GiftSearchClientProps = {
   user: User;
+  gameId: string;
+  priceLimit: string | null;
 };
 
-export function GiftSearchClient({ user }: GiftSearchClientProps) {
+export function GiftSearchClient({
+  user,
+  gameId,
+  priceLimit,
+}: GiftSearchClientProps) {
   const idPrefix = useId();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestions, setSuggestions] = useState<GiftSuggestion[]>([]);
@@ -28,7 +34,11 @@ export function GiftSearchClient({ user }: GiftSearchClientProps) {
     formState: { errors },
   } = useForm<GiftSearchForm>({
     resolver: zodResolver(giftSearchInputSchema),
-    defaultValues: { query: "" },
+    defaultValues: {
+      query: "",
+      gameId,
+      priceLimit: priceLimit ?? null,
+    },
   });
 
   const onSubmit = async (data: GiftSearchForm) => {
@@ -71,15 +81,18 @@ export function GiftSearchClient({ user }: GiftSearchClientProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        <input type="hidden" {...register("gameId")} />
+        <input type="hidden" {...register("priceLimit")} />
         <Field>
           <FieldLabel htmlFor={`${idPrefix}-gift-search`}>
-            Write some more about this person to look for good gifts.
+            Write some more about this person to look for more personalized
+            gifts.
           </FieldLabel>
           <FieldContent>
             <input
               id={`${idPrefix}-gift-search`}
               type="text"
-              placeholder="e.g., birthday gift, anniversary present..."
+              placeholder="Interests, hobbies, favorite things not already listed... your relationship with them..."
               className={cn(
                 "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
                 "ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",

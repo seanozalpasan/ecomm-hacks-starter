@@ -17,7 +17,7 @@ export function EmptyState({ userId, gameId }: EmptyStateProps) {
 
   const handleGoToGame = () => {
     if (gameId) {
-      router.push(`/dashboard/games/${gameId}`);
+      router.push(`/games/${gameId}`);
     }
   };
 
