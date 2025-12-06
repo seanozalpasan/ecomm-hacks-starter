@@ -3,48 +3,56 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { X } from "lucide-react";
+import { X, Film, Gamepad2, Music, Trophy, Palette, ShoppingBag, Coffee, Laptop, Sparkles, Gift, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { getOnboardingData } from "@/lib/utils/storage";
 
 // Christmas candy-cane color scheme - gradient properly contained
 const PILL_STYLES = {
 	unselected: "bg-white border-2 border-red-200 text-gray-700 hover:border-red-400 hover:bg-red-50 transition-all duration-200",
-	selected: "bg-gradient-to-r from-red-600 to-green-600 text-white border-2 border-red-700 shadow-lg",
+	selected: "bg-red-500 text-white border-2 border-red-700 shadow-lg",
 };
 
 // Interest categories with specific trending examples
 const INTEREST_CATEGORIES = [
 	{
-		title: "🎬 Movies & TV",
+		title: "Movies & TV",
+		icon: Film,
 		interests: ["Star Wars", "Marvel", "The Office", "Stranger Things", "Game of Thrones", "Breaking Bad", "Harry Potter", "Lord of the Rings", "Friends", "The Crown"],
 	},
 	{
-		title: "🎮 Gaming",
+		title: "Gaming",
+		icon: Gamepad2,
 		interests: ["Fortnite", "Minecraft", "Call of Duty", "League of Legends", "Valorant", "Roblox", "The Last of Us", "Elden Ring", "Zelda", "FIFA"],
 	},
 	{
-		title: "🎵 Music Artists",
+		title: "Music Artists",
+		icon: Music,
 		interests: ["Taylor Swift", "Sabrina Carpenter", "Future", "Drake", "The Weeknd", "Billie Eilish", "Bad Bunny", "SZA", "Olivia Rodrigo", "Travis Scott"],
 	},
 	{
-		title: "⚽ Sports",
+		title: "Sports",
+		icon: Trophy,
 		interests: ["Soccer", "Football", "Basketball", "Baseball", "Tennis", "Golf", "Formula 1", "UFC", "Hockey", "Volleyball"],
 	},
 	{
-		title: "🎨 Hobbies",
+		title: "Hobbies",
+		icon: Palette,
 		interests: ["Photography", "Cooking", "Baking", "Gardening", "Painting", "Reading", "Yoga", "Hiking", "Crafting", "Knitting"],
 	},
 	{
-		title: "🛍️ Fashion & Style",
+		title: "Fashion & Style",
+		icon: ShoppingBag,
 		interests: ["Nike", "Adidas", "Vintage Clothing", "Sneakers", "Jewelry", "Streetwear", "Luxury Brands", "Thrifting", "Watches", "Accessories"],
 	},
 	{
-		title: "☕ Food & Drink",
+		title: "Food & Drink",
+		icon: Coffee,
 		interests: ["Coffee", "Wine", "Craft Beer", "Sushi", "Pizza", "Chocolate", "Boba Tea", "Italian Food", "Mexican Food", "Vegan Food"],
 	},
 	{
-		title: "💻 Tech & Gadgets",
+		title: "Tech & Gadgets",
+		icon: Laptop,
 		interests: ["iPhone", "PlayStation", "Nintendo Switch", "MacBook", "AirPods", "Smart Home", "Drones", "VR Headsets", "Cameras", "Mechanical Keyboards"],
 	},
 ];
@@ -170,7 +178,7 @@ export default function InterestsPage() {
 	const totalSelections = selectedInterests.length + customInterests.length;
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
+		<div className="min-h-screen bg-white dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
 			<div className="w-full">
 				{/* Header */}
 				<motion.div
@@ -178,8 +186,10 @@ export default function InterestsPage() {
 					animate={{ opacity: 1, y: 0 }}
 					className="text-center mb-8 px-4"
 				>
-					<h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent">
-						🎄 Tell us about your interests! 🎁
+					<h1 className="text-4xl font-bold mb-4 text-red-500 flex items-center justify-center gap-3">
+						<Gift className="w-10 h-10" />
+						Tell us about your interests!
+						<Heart className="w-10 h-10" />
 					</h1>
 					<p className="text-gray-600 dark:text-gray-300">
 						Select at least 3 interests to help us personalize your Secret Santa experience
@@ -199,7 +209,7 @@ export default function InterestsPage() {
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="max-w-3xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 mb-8"
+						className="max-w-3xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl p-6 mb-8"
 					>
 					<h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
 						Don't see what you're looking for? Add your own!
@@ -239,8 +249,9 @@ export default function InterestsPage() {
 				{/* Custom Interests Pills - Below Input */}
 				{customInterests.length > 0 && (
 					<div className="max-w-3xl mx-auto mb-8 px-4">
-						<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-							✨ Your Custom Interests
+						<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+							<Sparkles className="w-6 h-6" />
+							Your Custom Interests
 						</h2>
 						<div className="flex flex-wrap gap-3">
 							{customInterests.map((interest) => (
@@ -263,16 +274,19 @@ export default function InterestsPage() {
 
 				{/* Interest Categories - Full Width */}
 				<div className="space-y-8 mb-12 px-6">
-					{INTEREST_CATEGORIES.map((category, categoryIndex) => (
-						<motion.div
-							key={category.title}
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: categoryIndex * 0.05 }}
-						>
-							<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-								{category.title}
-							</h2>
+					{INTEREST_CATEGORIES.map((category, categoryIndex) => {
+						const Icon = category.icon;
+						return (
+							<motion.div
+								key={category.title}
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: categoryIndex * 0.05 }}
+							>
+								<h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+									<Icon className="w-6 h-6" />
+									{category.title}
+								</h2>
 							<div className="flex flex-wrap gap-3">
 								{category.interests.map((interest) => {
 									const isSelected = selectedInterests.includes(interest);
@@ -291,7 +305,8 @@ export default function InterestsPage() {
 								})}
 							</div>
 						</motion.div>
-					))}
+					);
+					})}
 				</div>
 
 				{/* Continue Button */}
@@ -299,7 +314,7 @@ export default function InterestsPage() {
 					<button
 						onClick={handleContinue}
 						disabled={totalSelections < 3}
-						className="px-12 py-4 bg-gradient-to-r from-red-600 via-green-600 to-red-600 text-white text-lg font-bold rounded-full hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+						className="px-12 py-4 bg-red-500 text-white text-lg font-bold rounded-full hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
 					>
 						Continue to Next Step
 					</button>
