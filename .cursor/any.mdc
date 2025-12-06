@@ -13,3 +13,8 @@ This is a hackathon project secret santa where people sign up, give some basic i
   - Tanstack Query for data fetching
   - React hook form
   - Shadcn
+
+
+- the services folder contains the business logic for the application separate from the api
+- the api folder contains the api routes for the application
+

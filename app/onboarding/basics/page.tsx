@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import {
@@ -24,6 +24,8 @@ export default function BasicsPage() {
 	const router = useRouter();
 	const { mutate: submitBasics, isPending } = useSubmitBasics();
 	const idPrefix = useId();
+	const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+	const [locationError, setLocationError] = useState<string | null>(null);
 
 	const {
 		register,
@@ -57,6 +59,45 @@ export default function BasicsPage() {
 				router.push("/onboarding/likes");
 			},
 		});
+	};
+
+	const handleUseCurrentLocation = async () => {
+		setLocationError(null);
+		setIsFetchingLocation(true);
+
+		try {
+			const position = await new Promise<GeolocationPosition>(
+				(resolve, reject) => {
+					navigator.geolocation.getCurrentPosition(resolve, reject, {
+						enableHighAccuracy: true,
+						timeout: 10_000,
+					});
+				},
+			);
+
+			const { latitude, longitude } = position.coords;
+			const response = await fetch(
+				`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to look up location");
+			}
+
+			const data = await response.json();
+			const formattedLocation =
+				data?.display_name ?? `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+
+			setValue("location", formattedLocation);
+		} catch (error) {
+			setLocationError(
+				error instanceof Error
+					? error.message
+					: "Unable to fetch your location. Please enter it manually.",
+			);
+		} finally {
+			setIsFetchingLocation(false);
+		}
 	};
 
 	return (
@@ -114,20 +155,39 @@ export default function BasicsPage() {
 				<Field>
 					<FieldLabel htmlFor={`${idPrefix}-location`}>Location</FieldLabel>
 					<FieldContent>
-						<input
-							id={`${idPrefix}-location`}
-							type="text"
-							{...register("location")}
-							className={cn(
-								"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-								"placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50",
-								errors.location && "border-destructive",
-							)}
-							placeholder="Enter your location"
-						/>
+						<div className="flex flex-col gap-2">
+							<input
+								id={`${idPrefix}-location`}
+								type="text"
+								{...register("location")}
+								className={cn(
+									"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+									"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
+									"placeholder:text-muted-foreground",
+									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+									"disabled:cursor-not-allowed disabled:opacity-50",
+									errors.location && "border-destructive",
+								)}
+								placeholder="Enter your location"
+							/>
+							<div className="flex items-center gap-3">
+								<button
+									type="button"
+									onClick={handleUseCurrentLocation}
+									disabled={isFetchingLocation}
+									className="text-sm text-zinc-700 dark:text-zinc-300 underline underline-offset-4 disabled:opacity-60 disabled:cursor-not-allowed"
+								>
+									{isFetchingLocation
+										? "Fetching location..."
+										: "Use current location"}
+								</button>
+								{locationError && (
+									<span className="text-xs text-red-600 dark:text-red-400">
+										{locationError}
+									</span>
+								)}
+							</div>
+						</div>
 						<FieldError errors={errors.location ? [errors.location] : []} />
 					</FieldContent>
 				</Field>
