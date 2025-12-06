@@ -82,7 +82,7 @@ export default function BasicsPage() {
 			},
 			{
 				onSuccess: () => {
-					router.push("/onboarding/likes");
+					router.push("/onboarding/interests");
 				},
 			},
 		);
