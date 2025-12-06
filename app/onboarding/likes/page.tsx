@@ -63,7 +63,7 @@ export default function LikesPage() {
 					if (pendingInviteId) {
 						try {
 							// Accept the invite
-							await fetch("/api/games/invite/respond", {
+							const response = await fetch("/api/games/invite/respond", {
 								method: "POST",
 								headers: {
 									"Content-Type": "application/json",
@@ -74,6 +74,14 @@ export default function LikesPage() {
 								}),
 							});
 							localStorage.removeItem("pendingInviteAccept");
+
+							if (response.ok) {
+								const result = await response.json();
+								if (result.data?.gameId) {
+									router.push(`/dashboard/games/${result.data.gameId}`);
+									return;
+								}
+							}
 						} catch (error) {
 							console.error("Failed to auto-accept invite:", error);
 						}

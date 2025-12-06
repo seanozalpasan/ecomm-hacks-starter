@@ -79,5 +79,6 @@ export async function respondToInvite(
 				? "Invitation accepted successfully"
 				: "Invitation declined",
 		status: data.action === "accept" ? "accepted" : "declined",
+		gameId: invite[0].gameID,
 	};
 }

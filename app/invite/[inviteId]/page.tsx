@@ -83,8 +83,11 @@ export default function InvitePage() {
 		mutationFn: (action: "accept" | "decline") =>
 			respondToInvite(inviteId, action),
 		onSuccess: (data) => {
-			alert(data.data.message);
-			router.push("/");
+			if (data.data.status === "accepted" && data.data.gameId) {
+				router.push(`/dashboard/games/${data.data.gameId}`);
+			} else {
+				router.push("/");
+			}
 		},
 		onError: (error) => {
 			alert(error instanceof Error ? error.message : "Failed to respond");

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/db";
-import { games, gameInvites, users } from "@/lib/db/schema";
+import { games, gameInvites, gameParticipants, users } from "@/lib/db/schema";
 import {
 	type CreateGameInput,
 	createGameSchema,
@@ -19,9 +19,9 @@ export async function createGame(
 ): Promise<CreateGameResult> {
 	const data = createGameSchema.parse(input);
 
-	// Get the user's database ID and name from their Clerk ID
+	// Get the user's database ID, name, and email from their Clerk ID
 	const user = await db
-		.select({ id: users.id, name: users.name })
+		.select({ id: users.id, name: users.name, email: users.email })
 		.from(users)
 		.where(eq(users.clerkID, clerkUserId))
 		.limit(1);
@@ -32,6 +32,7 @@ export async function createGame(
 
 	const userId = user[0].id;
 	const userName = user[0].name;
+	const userEmail = user[0].email;
 
 	// Create the game
 	const [game] = await db
@@ -45,8 +46,23 @@ export async function createGame(
 		})
 		.returning({ id: games.id });
 
+	// Automatically add the host as a participant in the game
+	await db.insert(gameParticipants).values({
+		gameID: game.id,
+		userID: userId,
+	});
+
+	// Filter out the host's email from invites (case-insensitive)
+	const filteredInvites = data.invites.filter(
+		(email) => email.toLowerCase() !== userEmail.toLowerCase(),
+	);
+
+	if (filteredInvites.length === 0) {
+		throw new Error("You must invite at least one other person to the game");
+	}
+
 	// Create invites for each email
-	const inviteRecords = data.invites.map((email) => ({
+	const inviteRecords = filteredInvites.map((email) => ({
 		gameID: game.id,
 		email,
 		status: "PENDING" as const,
