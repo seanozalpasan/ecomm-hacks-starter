@@ -1,4 +1,4 @@
-import { pgTable, text, integer, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, uuid, timestamp, pgEnum, numeric } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enum for game status
@@ -20,7 +20,7 @@ export const users = pgTable('users', {
 export const games = pgTable('games', {
   id: uuid('id').defaultRandom().primaryKey(),
   authorID: uuid('author_id').notNull().references(() => users.id),
-  priceLimit: integer('price_limit'),
+  priceLimit: numeric('price_limit'),
   deadline: timestamp('deadline').notNull(),
   status: gameStatusEnum('status').notNull().default('DRAFT'),
   categories: text('categories').array(),
