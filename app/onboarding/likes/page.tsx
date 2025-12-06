@@ -4,18 +4,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
+import type z from "zod";
+import { Button } from "@/components/ui/button";
 import {
 	Field,
 	FieldContent,
 	FieldError,
 	FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useSubmitLikes } from "@/lib/hooks/useOnboarding";
-import { cn } from "@/lib/utils";
 import { getOnboardingData } from "@/lib/utils/storage";
-import { likesInputSchema } from "@/schemas/onboarding/likes";
+import { likesInputSchema } from "@/schemas/onboarding";
 
-type LikesFormData = typeof likesInputSchema._type;
+type LikesFormData = z.infer<typeof likesInputSchema>;
 
 export default function LikesPage() {
 	const router = useRouter();
@@ -96,18 +99,11 @@ export default function LikesPage() {
 						What's your favorite color?
 					</FieldLabel>
 					<FieldContent>
-						<input
+						<Input
 							id={`${idPrefix}-favoriteColor`}
 							type="text"
 							{...register("favoriteColor")}
-							className={cn(
-								"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-								"placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50",
-								errors.favoriteColor && "border-destructive",
-							)}
+							aria-invalid={errors.favoriteColor ? "true" : undefined}
 							placeholder="Enter your favorite color"
 						/>
 						<FieldError
@@ -121,17 +117,11 @@ export default function LikesPage() {
 						What's your favorite hobby or activity?
 					</FieldLabel>
 					<FieldContent>
-						<textarea
+						<Textarea
 							id={`${idPrefix}-favoriteHobby`}
 							{...register("favoriteHobby")}
 							rows={4}
-							className={cn(
-								"flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50 resize-none",
-								errors.favoriteHobby && "border-destructive",
-							)}
+							aria-invalid={errors.favoriteHobby ? "true" : undefined}
 							placeholder="Tell us about your favorite hobby or activity"
 						/>
 						<FieldError
@@ -145,17 +135,11 @@ export default function LikesPage() {
 						What's your favorite type of gift to receive?
 					</FieldLabel>
 					<FieldContent>
-						<textarea
+						<Textarea
 							id={`${idPrefix}-favoriteGift`}
 							{...register("favoriteGift")}
 							rows={4}
-							className={cn(
-								"flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-								"ring-offset-background placeholder:text-muted-foreground",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"disabled:cursor-not-allowed disabled:opacity-50 resize-none",
-								errors.favoriteGift && "border-destructive",
-							)}
+							aria-invalid={errors.favoriteGift ? "true" : undefined}
 							placeholder="Describe your ideal gift"
 						/>
 						<FieldError
@@ -165,20 +149,16 @@ export default function LikesPage() {
 				</Field>
 
 				<div className="flex justify-between gap-4 pt-4">
-					<button
+					<Button
 						type="button"
+						variant="ghost"
 						onClick={() => router.push("/onboarding/basics")}
-						className="px-6 py-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
 					>
 						Back
-					</button>
-					<button
-						type="submit"
-						disabled={isPending}
-						className="px-6 py-2 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					>
+					</Button>
+					<Button type="submit" disabled={isPending}>
 						{isPending ? "Saving..." : "Complete"}
-					</button>
+					</Button>
 				</div>
 			</form>
 		</div>

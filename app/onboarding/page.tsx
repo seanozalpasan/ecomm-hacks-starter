@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { hasCompletedOnboarding } from "@/services/onboarding/check";
+import { hasCompletedOnboarding } from "@/services/onboarding";
 
 export default async function OnboardingPage() {
 	const { userId } = await auth();

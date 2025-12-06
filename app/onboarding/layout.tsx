@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const ONBOARDING_STEPS = [
 	{ path: "/onboarding/basics", label: "Basics", step: 1 },
@@ -19,32 +21,12 @@ export default function OnboardingLayout({
 	const currentStepIndex = ONBOARDING_STEPS.findIndex(
 		(step) => step.path === pathname,
 	);
-	const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
-	const totalSteps = ONBOARDING_STEPS.length;
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
+		<div className="min-h-screen from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
 			<div className="container mx-auto px-4 py-8 max-w-2xl">
-				{/* Progress Indicator */}
-				<div className="mb-8">
-					<div className="flex items-center justify-between mb-2">
-						<span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-							Step {currentStep} of {totalSteps}
-						</span>
-						<span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-							{Math.round((currentStep / totalSteps) * 100)}%
-						</span>
-					</div>
-					<div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
-						<div
-							className="bg-zinc-900 dark:bg-zinc-50 h-2 rounded-full transition-all duration-300"
-							style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-						/>
-					</div>
-				</div>
-
 				{/* Step Indicators */}
-				<div className="flex justify-between mb-12">
+				<div className="flex gap-4 mb-12">
 					{ONBOARDING_STEPS.map((step, index) => {
 						const isActive = index === currentStepIndex;
 						const isCompleted = index < currentStepIndex;
@@ -55,24 +37,30 @@ export default function OnboardingLayout({
 								key={step.path}
 								className="flex flex-col items-center flex-1"
 							>
-								<button
+								<Button
+									type="button"
 									onClick={() => router.push(step.path)}
-									className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-										isActive
-											? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 scale-110"
-											: isCompleted
-												? "bg-zinc-700 text-white dark:bg-zinc-600 dark:text-zinc-50"
-												: "bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-									}`}
+									size="icon"
+									className={cn(
+										"w-10 h-10 rounded-full font-semibold",
+										isActive &&
+											"bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 scale-110",
+										isCompleted &&
+											"bg-zinc-700 text-white dark:bg-zinc-600 dark:text-zinc-50",
+										!isActive &&
+											!isCompleted &&
+											"bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+									)}
 								>
 									{isCompleted ? "✓" : stepNumber}
-								</button>
+								</Button>
 								<span
-									className={`text-xs mt-2 text-center ${
+									className={cn(
+										"text-xs mt-2 text-center",
 										isActive
 											? "font-semibold text-zinc-900 dark:text-zinc-50"
-											: "text-zinc-500 dark:text-zinc-400"
-									}`}
+											: "text-zinc-500 dark:text-zinc-400",
+									)}
 								>
 									{step.label}
 								</span>
@@ -81,10 +69,7 @@ export default function OnboardingLayout({
 					})}
 				</div>
 
-				{/* Page Content */}
-				<div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-8">
-					{children}
-				</div>
+				<div>{children}</div>
 			</div>
 		</div>
 	);
