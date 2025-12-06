@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { generateGiftSuggestions } from "@/services/gifts";
 import {
   enrichProductsWithFirecrawl,
@@ -8,6 +9,9 @@ import {
   type ProductResult,
 } from "@/services/productSearch";
 import { enhanceProductDescriptions } from "@/services/descriptionEnhancer";
+import { db } from "@/lib/db/db";
+import { users, gameUserMatches } from "@/lib/db/schema";
+import { saveGiftSuggestionsBatch } from "@/services/saved-gift-suggestions/create";
 
 interface GiftSuggestion {
   searchQuery: string;
@@ -60,6 +64,41 @@ export async function POST(request: NextRequest) {
 
     if (!gameId) {
       return NextResponse.json({ error: "Game ID is required" }, { status: 400 });
+    }
+
+    // Get the giver's database ID from their Clerk ID
+    const [giver] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.clerkID, userId))
+      .limit(1);
+
+    if (!giver) {
+      return NextResponse.json(
+        { error: "User not found. Please complete onboarding first." },
+        { status: 404 }
+      );
+    }
+
+    // Get the recipient they're matched with in this game
+    const [match] = await db
+      .select({
+        recipientID: gameUserMatches.recipientID,
+      })
+      .from(gameUserMatches)
+      .where(
+        and(
+          eq(gameUserMatches.gameID, gameId),
+          eq(gameUserMatches.buyerID, giver.id)
+        )
+      )
+      .limit(1);
+
+    if (!match) {
+      return NextResponse.json(
+        { error: "No match found. Please wait for the game to start." },
+        { status: 404 }
+      );
     }
 
     // PHASE 1: GENERATE IDEAS (Gemini)
@@ -125,7 +164,25 @@ export async function POST(request: NextRequest) {
       description: enhancedDescriptions[index]?.description || product.description,
     }));
 
-    // PHASE 3: Return combined data
+    // PHASE 3: Save the suggestions to the database
+    try {
+      await saveGiftSuggestionsBatch(
+        finalProducts.map((product) => ({
+          gameID: gameId,
+          giverID: giver.id,
+          recipientID: match.recipientID,
+          product,
+        }))
+      );
+    } catch (saveError) {
+      console.error(`[${requestId}] Error saving gift suggestions:`, {
+        error: saveError instanceof Error ? saveError.message : String(saveError),
+        stack: saveError instanceof Error ? saveError.stack : undefined,
+      });
+      // Continue even if save fails - don't block the response
+    }
+
+    // PHASE 4: Return combined data
     return NextResponse.json<GiftSuggestionsResponse>(
       {
         context: ideationResult.recipient, // Helpful for debugging/UI

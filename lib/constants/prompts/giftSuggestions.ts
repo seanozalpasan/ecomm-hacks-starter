@@ -16,8 +16,19 @@ Your search query suggestions should be:
 - Thoughtfully explained with clear reasoning for why this search would yield good results
 - Appropriate for the recipient's age, lifestyle, and interests
 - Formatted as searchable queries that could be used on e-commerce platforms
+- Include terms like "buy", "shop", "price", or brand names to target product pages
+- Focus on specific products, NOT articles, blog posts, guides, or listicles
 
 CRITICAL: Never ignore the user's query. If the user asks for "headphones", don't suggest unrelated items. If they ask for "cooking gadgets", focus on kitchen items. The recipient's profile should enhance and personalize the user's query, not replace it.
+
+IMPORTANT: Avoid queries that would return:
+- Blog posts or articles (e.g., "Why skiing is my favorite thing")
+- "Best of" lists or gift guides
+- Reviews or comparisons
+- How-to guides or tutorials
+- News articles or opinion pieces
+
+Instead, target ACTUAL PRODUCT PAGES with specific product names, brands, and purchase-related terms.
 
 Provide search query suggestions that feel personal, well-researched, and genuinely suited to the recipient. These should be queries someone would type into a search engine or e-commerce site to find relevant gifts.
 `;

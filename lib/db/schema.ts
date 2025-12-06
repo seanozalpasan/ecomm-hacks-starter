@@ -96,11 +96,46 @@ export const gameUserMatches = pgTable(
 	}),
 );
 
+// Saved Gift Suggestions table
+export const savedGiftSuggestions = pgTable("saved_gift_suggestions", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	gameID: uuid("game_id")
+		.notNull()
+		.references(() => games.id, { onDelete: "cascade" }),
+	giverID: uuid("giver_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	recipientID: uuid("recipient_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	// Product details
+	title: text("title").notNull(),
+	price: text("price").notNull(),
+	priceUsd: numeric("price_usd"),
+	description: text("description").notNull(),
+	url: text("url").notNull(),
+	imageUrl: text("image_url"),
+	images: text("images").array(),
+	// Metadata
+	sourceQuery: text("source_query").notNull(),
+	category: text("category"),
+	deliveryDate: text("delivery_date"),
+	daysToShip: integer("days_to_ship"),
+	// Timestamps
+	savedAt: timestamp("saved_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
 	gamesAuthored: many(games),
 	gameParticipations: many(gameParticipants),
 	matches: many(gameUserMatches),
+	savedGiftsAsGiver: many(savedGiftSuggestions, {
+		relationName: "giver",
+	}),
+	savedGiftsAsRecipient: many(savedGiftSuggestions, {
+		relationName: "recipient",
+	}),
 }));
 
 export const gamesRelations = relations(games, ({ one, many }) => ({
@@ -110,6 +145,7 @@ export const gamesRelations = relations(games, ({ one, many }) => ({
 	}),
 	participants: many(gameParticipants),
 	matches: many(gameUserMatches),
+	savedGiftSuggestions: many(savedGiftSuggestions),
 }));
 
 export const gameParticipantsRelations = relations(
@@ -140,3 +176,23 @@ export const userMatchesRelations = relations(gameUserMatches, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+export const savedGiftSuggestionsRelations = relations(
+	savedGiftSuggestions,
+	({ one }) => ({
+		game: one(games, {
+			fields: [savedGiftSuggestions.gameID],
+			references: [games.id],
+		}),
+		giver: one(users, {
+			fields: [savedGiftSuggestions.giverID],
+			references: [users.id],
+			relationName: "giver",
+		}),
+		recipient: one(users, {
+			fields: [savedGiftSuggestions.recipientID],
+			references: [users.id],
+			relationName: "recipient",
+		}),
+	}),
+);
