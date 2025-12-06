@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test tests/**/*.test.ts",
-    "db:seed": "tsx lib/db/seed.ts",
-    "db:test-match": "tsx lib/db/test-matching.ts",
-    "db:cleanup": "tsx lib/db/cleanup-test-data.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:test-match": "tsx scripts/test-matching.ts",
+    "db:test-update": "tsx scripts/test-game-update.ts",
+    "db:cleanup": "tsx scripts/cleanup-test-data.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.0",

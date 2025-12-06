@@ -44,12 +44,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Get user's email from Clerk session claims
-    const email =
+    const email: string =
       typeof sessionClaims === "object" && sessionClaims
-        ? // @ts-expect-error sessionClaims may not have email depending on Clerk config
-          (sessionClaims.email ??
-          // @ts-expect-error
-          sessionClaims.email_address ??
+        ? ((sessionClaims as any).email ??
+          (sessionClaims as any).email_address ??
           user.email)
         : user.email;
 
