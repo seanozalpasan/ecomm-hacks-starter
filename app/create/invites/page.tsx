@@ -1,27 +1,31 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
 	Field,
 	FieldContent,
 	FieldError,
 	FieldLabel,
 } from "@/components/ui/field";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { getGameData, saveGameData } from "@/lib/utils/game-storage";
 import { gameInviteSchema } from "@/schemas/games/create";
+import { toast } from 'sonner';
 
 type InviteFormData = z.infer<typeof gameInviteSchema>;
 
 export default function CreateGameInvitesPage() {
 	const router = useRouter();
 	const idPrefix = useId();
+	const { user } = useUser();
 	const [invites, setInvites] = useState<string[]>([]);
+	const [selfInviteError, setSelfInviteError] = useState<string | null>(null);
 
 	const {
 		register,
@@ -45,12 +49,22 @@ export default function CreateGameInvitesPage() {
 
 	const onAddEmail = (data: InviteFormData) => {
 		const email = data.email.toLowerCase().trim();
+		setSelfInviteError(null);
+
+		// Get current user's email
+		const currentUserEmail = user?.emailAddresses?.[0]?.emailAddress
+			?.toLowerCase()
+			.trim();
+
+		// Check if user is trying to invite themselves
+		if (currentUserEmail && email === currentUserEmail) {
+			setSelfInviteError("You cannot invite yourself to the game");
+			return;
+		}
 
 		// Check for duplicates
 		if (invites.includes(email)) {
-			toast.error("Email already added", {
-				description: "This email has already been added to the invite list",
-			});
+			setSelfInviteError("This email has already been added");
 			return;
 		}
 
@@ -78,10 +92,10 @@ export default function CreateGameInvitesPage() {
 
 	return (
 		<div className="max-w-md mx-auto">
-			<h1 className="text-3xl font-bold mb-2 text-zinc-900 dark:text-zinc-50">
+			<h1 className="text-3xl font-bold mb-2 text-black dark:text-white">
 				Invite Participants
 			</h1>
-			<p className="text-zinc-600 dark:text-zinc-400 mb-8">
+			<p className="text-gray-600 dark:text-gray-300 mb-8">
 				Add email addresses of people you want to invite to your Secret Santa.
 			</p>
 
@@ -90,27 +104,23 @@ export default function CreateGameInvitesPage() {
 					<FieldLabel htmlFor={`${idPrefix}-email`}>Email Address</FieldLabel>
 					<FieldContent>
 						<div className="flex gap-2">
-							<input
+							<Input
 								id={`${idPrefix}-email`}
 								type="email"
 								{...register("email")}
-								className={cn(
-									"flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm",
-									"ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-									"placeholder:text-muted-foreground",
-									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-									"disabled:cursor-not-allowed disabled:opacity-50",
-									errors.email && "border-destructive",
-								)}
 								placeholder="friend@example.com"
+								aria-invalid={errors.email ? "true" : "false"}
+								className="flex-1"
 							/>
-							<button
-								type="submit"
-								className="px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors whitespace-nowrap"
-							>
+							<Button type="submit" className="whitespace-nowrap">
 								Add
-							</button>
+							</Button>
 						</div>
+						{selfInviteError && (
+							<p className="text-sm text-red-600 dark:text-red-400 mt-1">
+								{selfInviteError}
+							</p>
+						)}
 						<FieldError errors={errors.email ? [errors.email] : []} />
 					</FieldContent>
 				</Field>
@@ -118,23 +128,25 @@ export default function CreateGameInvitesPage() {
 
 			{invites.length > 0 && (
 				<div className="mb-8">
-					<h2 className="text-lg font-semibold mb-3 text-zinc-900 dark:text-zinc-50">
+					<h2 className="text-lg font-semibold mb-3 text-black dark:text-white">
 						Invited ({invites.length})
 					</h2>
 					<ul className="space-y-2">
 						{invites.map((email) => (
 							<li
 								key={email}
-								className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
+								className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-800 rounded-lg"
 							>
-								<span className="text-zinc-900 dark:text-zinc-50">{email}</span>
-								<button
+								<span className="text-black dark:text-white">{email}</span>
+								<Button
 									type="button"
+									variant="ghost"
+									size="sm"
 									onClick={() => onRemoveEmail(email)}
-									className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
+									className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
 								>
 									Remove
-								</button>
+								</Button>
 							</li>
 						))}
 					</ul>
@@ -142,21 +154,12 @@ export default function CreateGameInvitesPage() {
 			)}
 
 			<div className="flex justify-end gap-4 pt-4">
-				<button
-					type="button"
-					onClick={() => router.back()}
-					className="px-6 py-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
-				>
+				<Button type="button" variant="ghost" onClick={() => router.back()}>
 					Back
-				</button>
-				<button
-					type="button"
-					onClick={onNext}
-					disabled={invites.length === 0}
-					className="px-6 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-				>
+				</Button>
+				<Button type="button" onClick={onNext} disabled={invites.length === 0}>
 					Next
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

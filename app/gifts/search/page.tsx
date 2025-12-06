@@ -1,15 +1,40 @@
 import { GiftSearchClient } from "@/components/gift-search-client";
+import { getUserById } from "@/services/user/query";
+import { getGameDetails } from "@/services/games/get-game";;
+import { EmptyState } from "./EmptyState";
 
-export default function GiftsSearchPage() {
-	// TODO: based on query param and user auth we will fetch the recipient info for the gift recipient
-	// basic stuff like their name so we can render "You are getting a gift for [NAME]!"
-	// TODO you may or may not know them well, they mentioned they like: ..., ...
+type Props = {
+  searchParams: Promise<{ userId?: string; gameId?: string }>;
+};
 
-	return (
-		<div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4">
-			<div className="w-full max-w-2xl">
-				<GiftSearchClient />
-			</div>
-		</div>
-	);
+export default async function GiftsSearchPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const { userId, gameId } = params;
+
+  // Try to avoid querying db if we just don't have the params
+  if (!userId || !gameId) {
+    return <EmptyState userId={userId} gameId={gameId} />;
+  }
+
+  const [user, game] = await Promise.all([
+    getUserById(userId),
+    getGameDetails(gameId),
+  ]);
+
+  // If queries don't return valid user and game also show empty state
+  if (!user || !game) {
+    return <EmptyState userId={userId} gameId={gameId} />;
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4 py-16 sm:py-32">
+      <div className="w-full max-w-2xl">
+        <GiftSearchClient
+          user={user}
+          gameId={game.id}
+          priceLimit={game.priceLimit}
+        />
+      </div>
+    </div>
+  );
 }

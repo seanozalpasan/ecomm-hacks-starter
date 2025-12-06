@@ -4,9 +4,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getGameData, clearGameData } from "@/lib/utils/game-storage";
+import { Button } from "@/components/ui/button";
+import { clearGameData, getGameData } from "@/lib/utils/game-storage";
 
 interface GameData {
+	name: string;
 	priceLimit: number;
 	deadline: string;
 	categories: string[];
@@ -20,6 +22,7 @@ async function createGame(data: GameData) {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
+			name: data.name,
 			priceLimit: data.priceLimit,
 			deadline: new Date(data.deadline),
 			categories: data.categories,
@@ -43,16 +46,13 @@ export default function CreateGameConfirmPage() {
 		mutationFn: createGame,
 		onSuccess: () => {
 			clearGameData();
-			toast.success("Game created successfully!", {
-				description: "Invitations have been sent to all participants",
-			});
+			toast.success("Game created successfully!");
 			router.push("/");
 		},
 		onError: (error) => {
-			toast.error("Failed to create game", {
-				description:
-					error instanceof Error ? error.message : "Please try again later",
-			});
+			toast.error(
+				error instanceof Error ? error.message : "Failed to create game",
+			);
 		},
 	});
 
@@ -65,6 +65,7 @@ export default function CreateGameConfirmPage() {
 		}
 
 		setGameData({
+			name: saved.basics.name || "",
 			priceLimit: saved.basics.priceLimit,
 			deadline: saved.basics.deadline,
 			categories: saved.basics.categories || [],
@@ -80,7 +81,7 @@ export default function CreateGameConfirmPage() {
 	if (!gameData) {
 		return (
 			<div className="max-w-md mx-auto text-center">
-				<p className="text-zinc-600 dark:text-zinc-400">Loading...</p>
+				<p className="text-gray-600 dark:text-gray-300">Loading...</p>
 			</div>
 		);
 	}
@@ -95,45 +96,51 @@ export default function CreateGameConfirmPage() {
 
 	return (
 		<div className="max-w-md mx-auto">
-			<h1 className="text-3xl font-bold mb-2 text-zinc-900 dark:text-zinc-50">
+			<h1 className="text-3xl font-bold mb-2 text-black dark:text-white">
 				Review and Confirm
 			</h1>
-			<p className="text-zinc-600 dark:text-zinc-400 mb-8">
+			<p className="text-gray-600 dark:text-gray-300 mb-8">
 				Please review the details before creating your Secret Santa game.
 			</p>
 
 			<div className="space-y-6 mb-8">
-				<div className="border-b border-zinc-200 dark:border-zinc-700 pb-4">
-					<h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mb-2">
+				<div className="border-b border-gray-200 dark:border-zinc-700 pb-4">
+					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
 						GAME DETAILS
 					</h2>
 					<div className="space-y-3">
 						<div className="flex justify-between">
-							<span className="text-zinc-600 dark:text-zinc-400">
+							<span className="text-gray-600 dark:text-gray-300">
+								Game Name
+							</span>
+							<span className="font-medium text-black dark:text-white">
+								{gameData.name}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-gray-600 dark:text-gray-300">
 								Price Limit
 							</span>
-							<span className="font-medium text-zinc-900 dark:text-zinc-50">
+							<span className="font-medium text-black dark:text-white">
 								${gameData.priceLimit}
 							</span>
 						</div>
 						<div className="flex justify-between">
-							<span className="text-zinc-600 dark:text-zinc-400">
-								Deadline
-							</span>
-							<span className="font-medium text-zinc-900 dark:text-zinc-50">
+							<span className="text-gray-600 dark:text-gray-300">Deadline</span>
+							<span className="font-medium text-black dark:text-white">
 								{formattedDeadline}
 							</span>
 						</div>
 						{gameData.categories.length > 0 && (
 							<div>
-								<span className="text-zinc-600 dark:text-zinc-400 block mb-1">
+								<span className="text-gray-600 dark:text-gray-300 block mb-1">
 									Categories
 								</span>
 								<div className="flex flex-wrap gap-2">
 									{gameData.categories.map((category) => (
 										<span
 											key={category}
-											className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-sm"
+											className="px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-black dark:text-white rounded text-sm"
 										>
 											{category}
 										</span>
@@ -145,14 +152,14 @@ export default function CreateGameConfirmPage() {
 				</div>
 
 				<div>
-					<h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mb-2">
+					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
 						PARTICIPANTS ({gameData.invites.length})
 					</h2>
 					<ul className="space-y-2">
 						{gameData.invites.map((email) => (
 							<li
 								key={email}
-								className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-50"
+								className="p-3 bg-gray-100 dark:bg-zinc-800 rounded-lg text-black dark:text-white"
 							>
 								{email}
 							</li>
@@ -161,31 +168,25 @@ export default function CreateGameConfirmPage() {
 				</div>
 			</div>
 
-			<div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-8">
-				<p className="text-sm text-purple-900 dark:text-purple-100">
-					When you click "Create Game", invitation emails will be sent to all
-					participants. They will receive a link to accept or decline the
-					invitation.
+			<div className="bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg p-4 mb-8">
+				<p className="text-sm text-black dark:text-white">
+					Invitation emails will be sent to all participants. They will receive
+					a link to accept or decline the invitation.
 				</p>
 			</div>
 
 			<div className="flex justify-end gap-4">
-				<button
+				<Button
 					type="button"
+					variant="ghost"
 					onClick={() => router.back()}
 					disabled={isPending}
-					className="px-6 py-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors disabled:opacity-50"
 				>
 					Back
-				</button>
-				<button
-					type="button"
-					onClick={onSubmit}
-					disabled={isPending}
-					className="px-6 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{isPending ? "Creating..." : "Create Game"}
-				</button>
+				</Button>
+				<Button type="button" onClick={onSubmit} disabled={isPending}>
+					{isPending ? "Creating..." : "Let's go"}
+				</Button>
 			</div>
 		</div>
 	);

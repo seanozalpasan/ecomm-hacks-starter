@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const gameBasicsSchema = z.object({
+	name: z.string().min(1, "Game name is required").max(100, "Game name is too long"),
 	priceLimit: z
 		.number()
 		.min(0, "Price limit must be at least 0")
@@ -27,6 +28,7 @@ export const gameInviteSchema = z.object({
 export type GameInviteInput = z.infer<typeof gameInviteSchema>;
 
 export const createGameSchema = z.object({
+	name: z.string().min(1, "Game name is required").max(100, "Game name is too long"),
 	priceLimit: z.coerce.number().min(0).max(10000),
 	deadline: z.coerce.date().refine((value) => value > new Date(), "Deadline must be in the future"),
 	categories: z.array(z.string()).default([]),

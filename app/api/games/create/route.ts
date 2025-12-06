@@ -35,13 +35,19 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Check if it's a validation error (like self-invite or no invites)
+		const errorMessage =
+			error instanceof Error ? error.message : "Internal server error";
+		const isValidationError =
+			errorMessage.includes("cannot invite yourself") ||
+			errorMessage.includes("must invite at least one");
+
 		return NextResponse.json(
 			{
 				success: false,
-				error:
-					error instanceof Error ? error.message : "Internal server error",
+				error: errorMessage,
 			},
-			{ status: 500 },
+			{ status: isValidationError ? 400 : 500 },
 		);
 	}
 }

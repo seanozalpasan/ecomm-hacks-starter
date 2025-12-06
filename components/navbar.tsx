@@ -13,7 +13,7 @@ export function Navbar() {
 					{/* Logo and Brand */}
 					<Link href="/" className="flex items-center gap-2 hover:opacity-80">
 						<Logo />
-						<span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">
+						<span className="text-xl font-bold text-black dark:text-white">
 							Unwrappd
 						</span>
 					</Link>
@@ -23,13 +23,13 @@ export function Navbar() {
 						<SignedIn>
 							<Link
 								href="/"
-								className="text-sm font-medium hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+								className="text-sm font-medium text-black dark:text-white hover:opacity-70 transition-opacity"
 							>
 								My Games
 							</Link>
 							<Link
 								href="/create"
-								className="text-sm font-medium hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+								className="text-sm font-medium text-black dark:text-white hover:opacity-70 transition-opacity"
 							>
 								Create Game
 							</Link>
