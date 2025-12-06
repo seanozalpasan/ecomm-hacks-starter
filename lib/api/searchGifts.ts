@@ -14,6 +14,10 @@ export interface ProductResult {
   imageUrl: string;
   sourceQuery: string;
   category: string;
+  priceUsd?: number;
+  deliveryDate?: string;
+  daysToShip?: number;
+  images?: string[];
 }
 
 export interface RecipientContext {

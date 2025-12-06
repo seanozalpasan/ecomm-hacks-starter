@@ -59,7 +59,7 @@ export function GiftSearchClient({
     <div className="w-full max-w-3xl space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-2xl font-semibold">
-          You are getting a gift for {user.name}!
+          You're getting a gift for {user.name}!
         </h1>
 
         {user.giftPreferences && user.giftPreferences.length > 0 && (
@@ -71,7 +71,7 @@ export function GiftSearchClient({
               {user.giftPreferences.map((preference, index) => (
                 <li
                   key={index}
-                  className="px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground"
+                  className="px-3 py-1.5 rounded-full bg-neutral-200 text-sm text-neutral-800"
                 >
                   {preference}
                 </li>
@@ -86,8 +86,7 @@ export function GiftSearchClient({
         <input type="hidden" {...register("priceLimit")} />
         <Field>
           <FieldLabel htmlFor={`${idPrefix}-gift-search`}>
-            Write some more about this person to look for more personalized
-            gifts.
+            Write some more about this person to find more personalized gifts.
           </FieldLabel>
           <FieldContent>
             <input
@@ -111,14 +110,40 @@ export function GiftSearchClient({
             )}
           </FieldContent>
         </Field>
-        <Button type="submit" disabled={isSubmitting} className="mt-4">
-          {isSubmitting ? "Searching…" : "Search"}
-        </Button>
+
+        <div className="flex justify-center mt-8">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            size="lg"
+            className="hover:shadow-lg"
+          >
+            {isSubmitting ? "Searching…" : "Search for gifts"}
+          </Button>
+        </div>
       </form>
 
-      {products.length > 0 && (
+      {isSubmitting && (
+        <div className="mt-8 text-center">
+          <div className="inline-flex items-center gap-2 text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            <span>Finding personalized gift recommendations…</span>
+          </div>
+        </div>
+      )}
+
+      {!isSubmitting && products.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Recommended Products</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">
+              Recommended Products ({products.length})
+            </h2>
+            {priceLimit && (
+              <span className="text-sm text-muted-foreground">
+                Under ${priceLimit}
+              </span>
+            )}
+          </div>
           <ProductCardList products={products} />
         </div>
       )}
