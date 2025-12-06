@@ -4,71 +4,76 @@ import { useMutation } from "@tanstack/react-query";
 import { saveOnboardingData } from "@/lib/utils/storage";
 
 interface BasicsData {
-  age: number;
-  name: string;
-  location: string;
+	birthday: Date;
+	name: string;
+	location: string;
 }
 
 interface LikesData {
-  step: number;
-  answer: string;
+	favoriteColor: string;
+	favoriteHobby: string;
+	favoriteGift: string;
 }
 
 async function submitBasics(data: BasicsData) {
-  const response = await fetch("/api/onboarding/basics", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+	const response = await fetch("/api/onboarding/basics", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(data),
+	});
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to submit basics");
-  }
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to submit basics");
+	}
 
-  return response.json();
+	return response.json();
 }
 
 async function submitLikes(data: LikesData) {
-  const response = await fetch("/api/onboarding/likes", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+	const response = await fetch("/api/onboarding/likes", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(data),
+	});
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to submit likes");
-  }
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to submit likes");
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export function useSubmitBasics() {
-  return useMutation({
-    mutationFn: submitBasics,
-    onSuccess: (response, variables) => {
-      saveOnboardingData({
-        basics: variables,
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: submitBasics,
+		onSuccess: (_response, variables) => {
+			saveOnboardingData({
+				basics: {
+					...variables,
+					birthday: variables.birthday.toISOString(),
+				},
+			});
+		},
+	});
 }
 
 export function useSubmitLikes() {
-  return useMutation({
-    mutationFn: submitLikes,
-    onSuccess: (response, variables) => {
-      saveOnboardingData({
-        likes: {
-          [variables.step]: variables.answer,
-        },
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: submitLikes,
+		onSuccess: (_response, variables) => {
+			saveOnboardingData({
+				likes: {
+					1: variables.favoriteColor,
+					2: variables.favoriteHobby,
+					3: variables.favoriteGift,
+				},
+			});
+		},
+	});
 }
-
