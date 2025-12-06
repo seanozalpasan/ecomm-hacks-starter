@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getOnboardingData, saveOnboardingData } from "@/lib/utils/storage";
+import { saveOnboardingData } from "@/lib/utils/storage";
 
 interface BasicsData {
 	birthday: Date;
@@ -10,10 +10,13 @@ interface BasicsData {
 	location: string;
 }
 
-interface LikesData {
-	favoriteColor: string;
-	favoriteHobby: string;
-	favoriteGift: string;
+interface CompleteOnboardingData {
+	basics: {
+		birthday: string;
+		name: string;
+		location: string;
+	};
+	interests: string[];
 }
 
 async function submitBasics(data: BasicsData) {
@@ -33,8 +36,8 @@ async function submitBasics(data: BasicsData) {
 	return response.json();
 }
 
-async function submitLikes(data: LikesData) {
-	const likesResponse = await fetch("/api/onboarding/likes", {
+async function completeOnboarding(data: CompleteOnboardingData) {
+	const response = await fetch("/api/onboarding/complete", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -42,36 +45,12 @@ async function submitLikes(data: LikesData) {
 		body: JSON.stringify(data),
 	});
 
-	if (!likesResponse.ok) {
-		const error = await likesResponse.json();
-		throw new Error(error.error || "Failed to submit likes");
-	}
-
-	const saved = getOnboardingData();
-	if (!saved.basics) {
-		throw new Error(
-			"Basics step missing. Please complete basics before likes.",
-		);
-	}
-
-	const completeResponse = await fetch("/api/onboarding/complete", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			basics: saved.basics,
-			likes: data,
-			interests: saved.interests || [],
-		}),
-	});
-
-	if (!completeResponse.ok) {
-		const error = await completeResponse.json();
+	if (!response.ok) {
+		const error = await response.json();
 		throw new Error(error.error || "Failed to complete onboarding");
 	}
 
-	return completeResponse.json();
+	return response.json();
 }
 
 export function useSubmitBasics() {
@@ -88,17 +67,12 @@ export function useSubmitBasics() {
 	});
 }
 
-export function useSubmitLikes() {
+export function useCompleteOnboarding() {
 	return useMutation({
-		mutationFn: submitLikes,
-		onSuccess: (_response, variables) => {
-			saveOnboardingData({
-				likes: {
-					1: variables.favoriteColor,
-					2: variables.favoriteHobby,
-					3: variables.favoriteGift,
-				},
-			});
+		mutationFn: completeOnboarding,
+		onSuccess: () => {
+			// Clear onboarding data from localStorage
+			localStorage.removeItem("onboarding");
 			toast.success("Onboarding completed!", {
 				description: "Your profile has been created successfully.",
 			});
