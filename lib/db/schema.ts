@@ -29,6 +29,7 @@ export const gameInvites = pgTable('game_invites', {
 export const games = pgTable('games', {
   id: uuid('id').defaultRandom().primaryKey(),
   authorID: uuid('author_id').notNull().references(() => users.id),
+  name: text('name'),
   priceLimit: numeric('price_limit'),
   deadline: timestamp('deadline').notNull(),
   status: gameStatusEnum('status').notNull().default('DRAFT'),

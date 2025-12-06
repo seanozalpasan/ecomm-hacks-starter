@@ -2,6 +2,7 @@ const GAME_STORAGE_KEY = "secretSantaGameData";
 
 export interface GameStorageData {
 	basics?: {
+		name: string;
 		priceLimit: number;
 		deadline: string;
 		categories: string[];

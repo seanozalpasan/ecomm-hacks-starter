@@ -39,6 +39,7 @@ export async function createGame(
 		.insert(games)
 		.values({
 			authorID: userId,
+			name: data.name,
 			priceLimit: data.priceLimit.toString(),
 			deadline: data.deadline,
 			categories: data.categories,
@@ -52,9 +53,19 @@ export async function createGame(
 		userID: userId,
 	});
 
-	// Filter out the host's email from invites (case-insensitive)
+	// Check if user is trying to invite themselves
+	const userEmailLower = userEmail.toLowerCase();
+	const hasSelfInvite = data.invites.some(
+		(email) => email.toLowerCase() === userEmailLower,
+	);
+
+	if (hasSelfInvite) {
+		throw new Error("You cannot invite yourself to the game");
+	}
+
+	// Filter out the host's email from invites (case-insensitive) as a safety measure
 	const filteredInvites = data.invites.filter(
-		(email) => email.toLowerCase() !== userEmail.toLowerCase(),
+		(email) => email.toLowerCase() !== userEmailLower,
 	);
 
 	if (filteredInvites.length === 0) {
