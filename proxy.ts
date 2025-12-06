@@ -18,7 +18,7 @@ const isOnboardingRoute = createRouteMatcher([
 const isOnboardingApiRoute = createRouteMatcher(["/api/onboarding(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
 
 	// Protect non-public routes - require Clerk authentication
 	if (!isPublicRoute(req)) {
@@ -30,9 +30,14 @@ export default clerkMiddleware(async (auth, req) => {
 		// Skip onboarding check for onboarding-related routes
 		const isOnOnboarding = isOnboardingRoute(req) || isOnboardingApiRoute(req);
 
-		if (!isOnOnboarding) {
-			const completed = await hasCompletedOnboarding(userId);
+		// Check Clerk metadata first for faster validation
+		const metadata = sessionClaims?.publicMetadata as { onboardingComplete?: boolean } | undefined;
+		const onboardingComplete = metadata?.onboardingComplete === true;
 
+		// If metadata shows incomplete, double-check with database
+		const completed = onboardingComplete || await hasCompletedOnboarding(userId);
+
+		if (!isOnOnboarding) {
 			// Redirect users who haven't completed onboarding to the onboarding page
 			if (!completed && !isPublicRoute(req)) {
 				const url = new URL("/onboarding/basics", req.url);
@@ -41,13 +46,10 @@ export default clerkMiddleware(async (auth, req) => {
 		}
 
 		// Redirect users who have completed onboarding away from onboarding pages
-		if (isOnboardingRoute(req)) {
-			const completed = await hasCompletedOnboarding(userId);
-			if (completed) {
-				const url = new URL("/", req.url);
-				url.searchParams.set("onboarding_redirect", "true");
-				return NextResponse.redirect(url);
-			}
+		if (isOnboardingRoute(req) && completed) {
+			const url = new URL("/", req.url);
+			url.searchParams.set("onboarding_redirect", "true");
+			return NextResponse.redirect(url);
 		}
 	}
 });

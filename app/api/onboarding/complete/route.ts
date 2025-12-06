@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -53,6 +53,14 @@ export async function POST(request: NextRequest) {
 		};
 
 		const result = await completeOnboarding(input);
+
+		// Update Clerk metadata to mark onboarding as complete
+		const client = await clerkClient();
+		await client.users.updateUserMetadata(userId, {
+			publicMetadata: {
+				onboardingComplete: true,
+			},
+		});
 
 		return NextResponse.json(
 			{

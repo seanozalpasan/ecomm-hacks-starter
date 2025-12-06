@@ -315,8 +315,8 @@ export default function InterestsPage() {
 			// Clear onboarding data from localStorage
 			localStorage.removeItem("onboarding");
 
-			// Redirect to root
-			router.push("/");
+			// Force reload to refresh Clerk session with updated metadata
+			window.location.href = "/";
 		} catch (error) {
 			console.error("Error completing onboarding:", error);
 			toast.error("Failed to complete onboarding", {
