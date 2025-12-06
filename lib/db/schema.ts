@@ -1,4 +1,4 @@
-import { pgTable, text, integer, uuid, timestamp, pgEnum, numeric, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, uuid, timestamp, pgEnum, numeric } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enum for game status
@@ -15,7 +15,6 @@ export const users = pgTable('users', {
   location: text('location').notNull(),
   giftPreferences: text('gift_preferences').array(),
   clothingSize: text('clothing_size'),
-  isOnboarded: boolean('is_onboarded').notNull().default(false),
 });
 
 export const gameInvites = pgTable('game_invites', {

@@ -101,7 +101,6 @@ function buildUserData(
 	name: string;
 	location: string;
 	giftPreferences: string[];
-	isOnboarded: boolean;
 } {
 	return {
 		email,
@@ -109,7 +108,6 @@ function buildUserData(
 		name: basics.name,
 		location: basics.location,
 		giftPreferences: buildGiftPreferences(likes),
-		isOnboarded: true,
 	};
 }
 
@@ -138,7 +136,7 @@ export async function hasCompletedOnboarding(
 	const dbClient = getDb(deps.dbClient);
 	const user = await findUserByClerkId(dbClient, clerkId);
 
-	return !!user && user.isOnboarded;
+	return !!user;
 }
 
 export async function completeOnboarding(
