@@ -33,5 +33,9 @@ export async function getUserGames(clerkUserId: string) {
 		.leftJoin(users, eq(games.authorID, users.id))
 		.where(eq(gameParticipants.userID, userId));
 
-	return userGames;
+	// Add isHost field to each game
+	return userGames.map((game) => ({
+		...game,
+		isHost: game.authorId === userId,
+	}));
 }

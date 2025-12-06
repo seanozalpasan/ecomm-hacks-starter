@@ -3,8 +3,12 @@
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Calendar, DollarSign } from "lucide-react";
+import Image from "next/image";
 import { notFound, useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InviteDetails {
 	id: string;
@@ -17,8 +21,36 @@ interface InviteDetails {
 		categories: string[] | null;
 		author: {
 			name: string;
+			clerkId: string;
 		};
 	};
+}
+
+interface UserImage {
+	clerkId: string;
+	imageUrl: string | null;
+}
+
+// Placeholder avatar image (blank silhouette)
+const BLANK_AVATAR =
+	'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cbd5e1"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/%3E%3C/svg%3E';
+
+async function fetchUserImages(clerkIds: string[]): Promise<UserImage[]> {
+	const response = await fetch("/api/users/images", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ clerkIds }),
+	});
+
+	if (!response.ok) {
+		console.error("Failed to fetch user images");
+		return [];
+	}
+
+	const data = await response.json();
+	return data.users;
 }
 
 function getOrdinalSuffix(day: number): string {
@@ -92,11 +124,38 @@ async function declineInvite(inviteId: string) {
 	return response.json();
 }
 
+async function fetchPostcardImage(inviteId: string): Promise<string | null> {
+	try {
+		const response = await fetch(`/api/invites/${inviteId}/postcard`);
+		if (!response.ok) {
+			let errorMessage = "Failed to fetch postcard image";
+			try {
+				const errorData = await response.json();
+				if (errorData?.message) {
+					errorMessage = `${errorMessage}: ${errorData.message}`;
+				}
+			} catch {
+				// ignore parse errors
+			}
+			console.error(errorMessage);
+			return null;
+		}
+		const data = await response.json();
+		return data.image || null;
+	} catch (error) {
+		console.error("Error fetching postcard:", error);
+		return null;
+	}
+}
+
 export default function InvitePage() {
 	const params = useParams();
 	const router = useRouter();
 	const { isSignedIn } = useUser();
 	const inviteId = params.inviteId as string;
+	const [authorImageUrl, setAuthorImageUrl] = useState<string>(BLANK_AVATAR);
+	const [postcardImage, setPostcardImage] = useState<string | null>(null);
+	const [isGeneratingPostcard, setIsGeneratingPostcard] = useState(false);
 
 	const {
 		data: invite,
@@ -106,6 +165,49 @@ export default function InvitePage() {
 		queryKey: ["invite", inviteId],
 		queryFn: () => fetchInviteDetails(inviteId),
 	});
+
+	// Fetch author's image when invite data is available
+	useEffect(() => {
+		if (!invite?.game?.author?.clerkId) return;
+
+		fetchUserImages([invite.game.author.clerkId]).then((images) => {
+			const authorImage = images.find(
+				(img) => img.clerkId === invite.game.author.clerkId,
+			);
+			setAuthorImageUrl(authorImage?.imageUrl || BLANK_AVATAR);
+		});
+	}, [invite?.game?.author?.clerkId]);
+
+	// Fetch or generate postcard image
+	useEffect(() => {
+		if (!inviteId) return;
+
+		// Check localStorage first
+		const storageKey = `postcard_${inviteId}`;
+		const storedImage = localStorage.getItem(storageKey);
+
+		if (storedImage) {
+			setPostcardImage(storedImage);
+			return;
+		}
+
+		// Generate new postcard if not in localStorage
+		setIsGeneratingPostcard(true);
+		fetchPostcardImage(inviteId)
+			.then((image) => {
+				if (image) {
+					// Store in localStorage
+					localStorage.setItem(storageKey, image);
+					setPostcardImage(image);
+				}
+			})
+			.catch((error) => {
+				console.error("Failed to generate postcard:", error);
+			})
+			.finally(() => {
+				setIsGeneratingPostcard(false);
+			});
+	}, [inviteId]);
 
 	// Handle 404 by calling notFound()
 	if (error && (error as Error & { status?: number }).status === 404) {
@@ -168,9 +270,31 @@ export default function InvitePage() {
 
 	if (isLoading) {
 		return (
-			<div className="min-h-screen bg-white flex items-center justify-center">
-				<div className="text-center">
-					<p className="text-zinc-600">Loading invitation...</p>
+			<div className="min-h-screen bg-white flex items-center justify-center p-4">
+				<div className="bg-white rounded-lg max-w-md w-full space-y-6">
+					<Skeleton className="w-full h-48 rounded-lg" />
+					<div className="space-y-2">
+						<Skeleton className="h-8 w-3/4 mx-auto" />
+						<Skeleton className="h-6 w-1/2 mx-auto" />
+					</div>
+					<div className="flex gap-6">
+						<div className="flex-1 space-y-2">
+							<Skeleton className="h-4 w-20" />
+							<Skeleton className="h-6 w-24" />
+						</div>
+						<div className="flex-1 space-y-2">
+							<Skeleton className="h-4 w-16" />
+							<Skeleton className="h-6 w-16" />
+						</div>
+					</div>
+					<div className="flex items-center gap-3">
+						<Skeleton className="w-10 h-10 rounded-full shrink-0" />
+						<Skeleton className="h-4 w-32" />
+					</div>
+					<div className="flex gap-3">
+						<Skeleton className="flex-1 h-11 rounded-lg" />
+						<Skeleton className="flex-1 h-11 rounded-lg" />
+					</div>
 				</div>
 			</div>
 		);
@@ -189,13 +313,9 @@ export default function InvitePage() {
 							? error.message
 							: "Failed to load invitation details."}
 					</p>
-					<button
-						type="button"
-						onClick={() => router.push("/")}
-						className="px-6 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors"
-					>
+					<Button onClick={() => router.push("/")} variant="default">
 						Go Home
-					</button>
+					</Button>
 				</div>
 			</div>
 		);
@@ -216,8 +336,26 @@ export default function InvitePage() {
 	return (
 		<div className="min-h-screen bg-white flex items-center justify-center p-4">
 			<div className="bg-white rounded-lg max-w-md w-full">
-				{/* Large image placeholder */}
-				<div className="w-full h-48 bg-zinc-100 rounded-lg mb-6" />
+				{/* Postcard image */}
+				<div className="w-full h-48 bg-zinc-100 rounded-lg mb-6 overflow-hidden relative">
+					{isGeneratingPostcard ? (
+						<div className="w-full h-full flex items-center justify-center">
+							<p className="text-zinc-500 text-sm">Generating postcard...</p>
+						</div>
+					) : postcardImage ? (
+						<Image
+							src={postcardImage}
+							alt="Christmas postcard invitation"
+							fill
+							className="object-cover"
+							sizes="(max-width: 768px) 100vw, 448px"
+						/>
+					) : (
+						<div className="w-full h-full flex items-center justify-center">
+							<p className="text-zinc-500 text-sm">Loading postcard...</p>
+						</div>
+					)}
+				</div>
 
 				{/* Title */}
 				<h1 className="text-2xl font-bold text-center mb-8 text-zinc-900">
@@ -265,7 +403,15 @@ export default function InvitePage() {
 
 						{/* Author section */}
 						<div className="flex items-center gap-3 mb-8">
-							<div className="w-10 h-10 rounded-full bg-zinc-200 shrink-0" />
+							<div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-zinc-200">
+								<Image
+									src={authorImageUrl}
+									alt={`${invite.game.author.name}'s avatar`}
+									fill
+									className="object-cover"
+									sizes="40px"
+								/>
+							</div>
 							<p className="text-sm text-zinc-600">
 								Invited by{" "}
 								<span className="font-medium text-zinc-900">
@@ -276,22 +422,26 @@ export default function InvitePage() {
 
 						{/* Action buttons */}
 						<div className="flex gap-3">
-							<button
+							<Button
 								type="button"
 								onClick={handleDecline}
 								disabled={isPending || isDeclining}
-								className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+								variant="destructive"
+								size="lg"
+								className="flex-1"
 							>
 								{isPending || isDeclining ? "Processing..." : "Decline"}
-							</button>
-							<button
+							</Button>
+							<Button
 								type="button"
 								onClick={handleAccept}
 								disabled={isPending || isDeclining}
-								className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+								variant="default"
+								size="lg"
+								className="flex-1 bg-green-600 hover:bg-green-700 text-white focus-visible:ring-green-600"
 							>
 								{isPending || isDeclining ? "Processing..." : "Accept"}
-							</button>
+							</Button>
 						</div>
 					</>
 				)}

@@ -37,6 +37,7 @@ export default function RootLayout({
 		<ClerkProvider>
 			<html lang="en">
 				<body className={`${snPro.variable} antialiased`}>
+					<Navbar />
 					<Providers>{children}</Providers>
 					<Toaster
 						position="bottom-right"

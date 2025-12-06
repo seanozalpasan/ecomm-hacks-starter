@@ -2,7 +2,7 @@
 
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Minus } from "lucide-react";
+import { ChevronDown, Crown, Mail, Minus, Users } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -22,6 +22,19 @@ interface Game {
 	status: string;
 	authorId: string;
 	authorName: string;
+	isHost: boolean;
+}
+
+interface PendingInvite {
+	id: string;
+	gameId: string;
+	gameName: string;
+	priceLimit: string | null;
+	deadline: Date;
+	categories: string[] | null;
+	status: string;
+	invitedAt: Date;
+	hostName: string;
 }
 
 async function fetchUserGames(): Promise<Game[]> {
@@ -34,11 +47,25 @@ async function fetchUserGames(): Promise<Game[]> {
 	return data.data;
 }
 
+async function fetchPendingInvites(): Promise<PendingInvite[]> {
+	const response = await fetch("/api/games/invites/pending");
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to fetch pending invites");
+	}
+	const data = await response.json();
+	return data.data;
+}
+
 function HomeContent() {
 	const searchParams = useSearchParams();
 	const { data: games, isLoading } = useQuery({
 		queryKey: ["userGames"],
 		queryFn: fetchUserGames,
+	});
+	const { data: pendingInvites, isLoading: isLoadingInvites } = useQuery({
+		queryKey: ["pendingInvites"],
+		queryFn: fetchPendingInvites,
 	});
 	const [showPastGames, setShowPastGames] = useState(false);
 
@@ -98,16 +125,6 @@ function HomeContent() {
 
 				<SignedIn>
 					<div className="max-w-4xl mx-auto">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<Logo />
-								<h1 className="text-3xl font-bold text-black dark:text-white mb-2">
-									Unwrappd
-								</h1>
-							</div>
-							<UserButton />
-						</div>
-
 						<div className="flex justify-between items-center mb-6">
 							<h2 className="text-2xl font-bold text-black dark:text-white">
 								Your Games
@@ -121,149 +138,232 @@ function HomeContent() {
 							</Button>
 						</div>
 
-						{isLoading ? (
+						{isLoading || isLoadingInvites ? (
 							<div className="text-center py-12">
 								<p className="text-gray-600 dark:text-gray-300">
 									Loading your games...
 								</p>
 							</div>
-						) : activeGames.length > 0 || pastGames.length > 0 ? (
+						) : (
 							<>
-								{/* Active Games */}
-								{activeGames.length > 0 && (
-									<div className="grid gap-4 mb-6">
-										{activeGames.map((game) => (
-											<Link
-												key={game.id}
-												href={`/games/${game.id}`}
-												className="block"
-											>
-												<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-													<div className="flex justify-between items-center">
-														<div>
-															<h3 className="text-lg font-bold text-black dark:text-white mb-1">
-																{game.name}
-															</h3>
-															<p className="text-sm text-black dark:text-gray-300">
-																Buy in time for{" "}
-																<b>
-																	{new Date(game.deadline).toLocaleDateString(
-																		"en-US",
-																		{
+								{/* Pending Invites Section */}
+								{pendingInvites && pendingInvites.length > 0 && (
+									<div className="mb-8">
+										<h3 className="text-lg font-semibold text-black dark:text-white mb-4 flex items-center gap-2">
+											<Mail className="w-5 h-5" />
+											Pending Invitations
+										</h3>
+										<div className="grid gap-4">
+											{pendingInvites.map((invite) => (
+												<Link
+													key={invite.id}
+													href={`/invite/${invite.id}`}
+													className="block"
+												>
+													<div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+														<div className="flex justify-between items-start">
+															<div className="flex-1">
+																<div className="flex items-center gap-2 mb-2">
+																	<h3 className="text-lg font-bold text-black dark:text-white">
+																		{invite.gameName}
+																	</h3>
+																	<span className="px-2.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+																		New
+																	</span>
+																</div>
+																<p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+																	Hosted by{" "}
+																	<span className="font-medium">
+																		{invite.hostName}
+																	</span>
+																</p>
+																<p className="text-sm text-black dark:text-gray-300">
+																	Buy in time for{" "}
+																	<b>
+																		{new Date(
+																			invite.deadline,
+																		).toLocaleDateString("en-US", {
 																			day: "numeric",
 																			month: "long",
-																		},
-																	)}
-																</b>
-															</p>
+																		})}
+																	</b>
+																</p>
+															</div>
+															<Mail className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-1" />
 														</div>
 													</div>
-												</div>
-											</Link>
-										))}
+												</Link>
+											))}
+										</div>
 									</div>
 								)}
 
-								{/* Past Games Dropdown */}
-								{pastGames.length > 0 && (
-									<div className="border-t border-gray-200 dark:border-zinc-700 pt-6">
-										<button
-											type="button"
-											onClick={() => setShowPastGames(!showPastGames)}
-											className="w-full flex items-center justify-between mb-4 hover:opacity-80 transition-opacity"
-											aria-expanded={showPastGames}
-											aria-label={
-												showPastGames ? "Hide past games" : "Show past games"
-											}
-										>
-											<h3 className="text-xl font-bold text-black dark:text-white">
-												Previous
-											</h3>
-											<div className="relative w-5 h-5 inline-flex items-center justify-center">
-												<motion.div
-													animate={{
-														opacity: showPastGames ? 0 : 1,
-														scale: showPastGames ? 0.6 : 1,
-													}}
-													transition={{
-														duration: 0.3,
-														ease: [0.4, 0, 0.2, 1],
-													}}
-													className="absolute"
-												>
-													<ChevronDown className="w-5 h-5 text-black dark:text-white" />
-												</motion.div>
-												<motion.div
-													animate={{
-														opacity: showPastGames ? 1 : 0,
-														scale: showPastGames ? 1 : 0.6,
-													}}
-													transition={{
-														duration: 0.3,
-														ease: [0.4, 0, 0.2, 1],
-													}}
-													className="absolute"
-												>
-													<Minus className="w-5 h-5 text-black dark:text-white" />
-												</motion.div>
-											</div>
-										</button>
-
-										{showPastGames && (
-											<motion.div
-												initial={{ opacity: 0, height: 0 }}
-												animate={{ opacity: 1, height: "auto" }}
-												exit={{ opacity: 0, height: 0 }}
-												transition={{
-													duration: 0.3,
-													ease: [0.4, 0, 0.2, 1],
-												}}
-												className="overflow-hidden"
-											>
-												<div className="grid gap-4">
-													{pastGames.map((game) => (
-														<Link
-															key={game.id}
-															href={`/games/${game.id}`}
-															className="block"
-														>
-															<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-																<div className="flex justify-between items-center">
-																	<div>
-																		<h3 className="text-lg font-bold text-black dark:text-white mb-1">
+								{/* Active Games */}
+								{activeGames.length > 0 || pastGames.length > 0 ? (
+									<>
+										{activeGames.length > 0 && (
+											<div className="grid gap-4 mb-6">
+												{activeGames.map((game) => (
+													<Link
+														key={game.id}
+														href={`/games/${game.id}`}
+														className="block"
+													>
+														<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+															<div className="flex justify-between items-center">
+																<div className="flex-1">
+																	<div className="flex items-center gap-2 mb-1">
+																		<h3 className="text-lg font-bold text-black dark:text-white">
 																			{game.name}
 																		</h3>
-																		<p className="text-sm text-black dark:text-gray-300">
-																			Due{" "}
-																			<b>
-																				{new Date(
-																					game.deadline,
-																				).toLocaleDateString("en-US", {
-																					day: "numeric",
-																					month: "long",
-																				})}
-																			</b>
-																		</p>
+																		{game.isHost ? (
+																			<span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+																				<Crown className="w-3 h-3" />
+																				Host
+																			</span>
+																		) : (
+																			<span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full">
+																				<Users className="w-3 h-3" />
+																				Participant
+																			</span>
+																		)}
 																	</div>
+																	<p className="text-sm text-black dark:text-gray-300">
+																		Buy in time for{" "}
+																		<b>
+																			{new Date(
+																				game.deadline,
+																			).toLocaleDateString("en-US", {
+																				day: "numeric",
+																				month: "long",
+																			})}
+																		</b>
+																	</p>
 																</div>
 															</div>
-														</Link>
-													))}
-												</div>
-											</motion.div>
+														</div>
+													</Link>
+												))}
+											</div>
 										)}
+
+										{/* Past Games Dropdown */}
+										{pastGames.length > 0 && (
+											<div className="border-t border-gray-200 dark:border-zinc-700 pt-6">
+												<button
+													type="button"
+													onClick={() => setShowPastGames(!showPastGames)}
+													className="w-full flex items-center justify-between mb-4 hover:opacity-80 transition-opacity"
+													aria-expanded={showPastGames}
+													aria-label={
+														showPastGames
+															? "Hide past games"
+															: "Show past games"
+													}
+												>
+													<h3 className="text-xl font-bold text-black dark:text-white">
+														Previous
+													</h3>
+													<div className="relative w-5 h-5 inline-flex items-center justify-center">
+														<motion.div
+															animate={{
+																opacity: showPastGames ? 0 : 1,
+																scale: showPastGames ? 0.6 : 1,
+															}}
+															transition={{
+																duration: 0.3,
+																ease: [0.4, 0, 0.2, 1],
+															}}
+															className="absolute"
+														>
+															<ChevronDown className="w-5 h-5 text-black dark:text-white" />
+														</motion.div>
+														<motion.div
+															animate={{
+																opacity: showPastGames ? 1 : 0,
+																scale: showPastGames ? 1 : 0.6,
+															}}
+															transition={{
+																duration: 0.3,
+																ease: [0.4, 0, 0.2, 1],
+															}}
+															className="absolute"
+														>
+															<Minus className="w-5 h-5 text-black dark:text-white" />
+														</motion.div>
+													</div>
+												</button>
+
+												{showPastGames && (
+													<motion.div
+														initial={{ opacity: 0, height: 0 }}
+														animate={{ opacity: 1, height: "auto" }}
+														exit={{ opacity: 0, height: 0 }}
+														transition={{
+															duration: 0.3,
+															ease: [0.4, 0, 0.2, 1],
+														}}
+														className="overflow-hidden"
+													>
+														<div className="grid gap-4">
+															{pastGames.map((game) => (
+																<Link
+																	key={game.id}
+																	href={`/games/${game.id}`}
+																	className="block"
+																>
+																	<div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-6 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+																		<div className="flex justify-between items-center">
+																			<div className="flex-1">
+																				<div className="flex items-center gap-2 mb-1">
+																					<h3 className="text-lg font-bold text-black dark:text-white">
+																						{game.name}
+																					</h3>
+																					{game.isHost ? (
+																						<span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+																							<Crown className="w-3 h-3" />
+																							Host
+																						</span>
+																					) : (
+																						<span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full">
+																							<Users className="w-3 h-3" />
+																							Participant
+																						</span>
+																					)}
+																				</div>
+																				<p className="text-sm text-black dark:text-gray-300">
+																					Due{" "}
+																					<b>
+																						{new Date(
+																							game.deadline,
+																						).toLocaleDateString("en-US", {
+																							day: "numeric",
+																							month: "long",
+																						})}
+																					</b>
+																				</p>
+																			</div>
+																		</div>
+																	</div>
+																</Link>
+															))}
+														</div>
+													</motion.div>
+												)}
+											</div>
+										)}
+									</>
+								) : (
+									<div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-12 text-center">
+										<p className="text-gray-600 dark:text-gray-300 mb-4">
+											You haven't joined any games yet.
+										</p>
+										<Button asChild>
+											<Link href="/create">Create Your First Game</Link>
+										</Button>
 									</div>
 								)}
 							</>
-						) : (
-							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-12 text-center">
-								<p className="text-gray-600 dark:text-gray-300 mb-4">
-									You haven't joined any games yet.
-								</p>
-								<Button asChild>
-									<Link href="/create">Create Your First Game</Link>
-								</Button>
-							</div>
 						)}
 					</div>
 				</SignedIn>

@@ -13,6 +13,7 @@ interface InviteDetails {
 		categories: string[] | null;
 		author: {
 			name: string;
+			clerkId: string;
 		};
 	};
 }
@@ -30,6 +31,7 @@ export async function getInviteDetails(
 			deadline: games.deadline,
 			categories: games.categories,
 			authorName: users.name,
+			authorClerkId: users.clerkID,
 		})
 		.from(gameInvites)
 		.innerJoin(games, eq(gameInvites.gameID, games.id))
@@ -54,6 +56,7 @@ export async function getInviteDetails(
 			categories: invite.categories,
 			author: {
 				name: invite.authorName,
+				clerkId: invite.authorClerkId,
 			},
 		},
 	};
