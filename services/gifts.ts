@@ -6,29 +6,29 @@ import { db } from "@/lib/db/db";
 import { users } from "@/lib/db/schema";
 
 type Suggestion = {
-	name: string;
-	description: string;
-	category: string;
+  searchQuery: string;
+  description: string;
+  category: string;
 };
 
 type RecipientProfile = {
-	name: string;
-	likes: string[];
-	dislikes: string[];
-	preferences: {
-		music: string[];
-		books: string[];
-		movies: string[];
-	};
-	additionalInfo: string;
+  name: string;
+  likes: string[];
+  dislikes: string[];
+  preferences: {
+    music: string[];
+    books: string[];
+    movies: string[];
+  };
+  additionalInfo: string;
 };
 
 const ai = new GoogleGenAI({
-	apiKey: process.env.GEMINI_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 function buildPrompt(query: string, recipient: RecipientProfile) {
-	return `${giftSuggestionsPrompt}
+  return `${giftSuggestionsPrompt}
 
 Recipient Information:
 - Name: ${recipient.name}
@@ -42,90 +42,82 @@ Recipient Information:
 
 User Query: ${query}
 
-Please provide 3-5 specific gift suggestions that match the recipient's interests and preferences. Format your response as a JSON array of objects, where each object has:
-- name: the gift name
-- description: a brief description of why this gift is suitable
-- category: the category (e.g., "books", "electronics", "experiences", etc.)
-
-Example format:
-[
-  {
-    "name": "Gift Name",
-    "description": "Why this gift is perfect",
-    "category": "category"
-  }
-]`;
-}
-
-function parseSuggestions(raw: string): Suggestion[] {
-	const jsonMatch = raw.match(/\[[\s\S]*\]/);
-	if (!jsonMatch) {
-		return [
-			{
-				name: "AI Response",
-				description: raw,
-				category: "general",
-			},
-		];
-	}
-
-	try {
-		return JSON.parse(jsonMatch[0]) as Suggestion[];
-	} catch {
-		return [
-			{
-				name: "AI Response",
-				description: raw,
-				category: "general",
-			},
-		];
-	}
+Please provide 3-5 specific search query suggestions that match the recipient's interests and preferences.`;
 }
 
 export async function generateGiftSuggestions({
-	query,
-	userId,
+  query,
+  userId,
 }: {
-	query: string;
-	userId: string;
+  query: string;
+  userId: string;
 }) {
-	if (!query) {
-		throw new Error("Query is required");
-	}
+  if (!query) {
+    throw new Error("Query is required");
+  }
 
-	// Prefer real user data when available; fall back to placeholder profile.
-	const [user] = userId
-		? await db.select().from(users).where(eq(users.clerkID, userId)).limit(1)
-		: [];
+  // Prefer real user data when available; fall back to placeholder profile.
+  const [user] = userId
+    ? await db.select().from(users).where(eq(users.clerkID, userId)).limit(1)
+    : [];
 
-	const recipient: RecipientProfile = user
-		? {
-				name: user.name,
-				likes: user.giftPreferences?.filter(Boolean) ?? [],
-				dislikes: [],
-				preferences: {
-					music: [],
-					books: [],
-					movies: [],
-				},
-				additionalInfo: `Location: ${user.location}`,
-			}
-		: winstonProfileData;
+  const recipient: RecipientProfile = user
+    ? {
+        name: user.name,
+        likes: user.giftPreferences?.filter(Boolean) ?? [],
+        dislikes: [],
+        preferences: {
+          music: [],
+          books: [],
+          movies: [],
+        },
+        additionalInfo: `Location: ${user.location}`,
+      }
+    : winstonProfileData;
 
-	const fullPrompt = buildPrompt(query, recipient);
+  const fullPrompt = buildPrompt(query, recipient);
 
-	const aiResponse = await ai.models.generateContent({
-		model: "gemini-2.5-flash",
-		contents: fullPrompt,
-	});
+  const aiResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: fullPrompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            searchQuery: { type: "STRING" },
+            description: { type: "STRING" },
+            category: { type: "STRING" },
+          },
+          required: ["searchQuery", "description", "category"],
+        },
+      },
+    },
+  });
 
-	const suggestionsText = aiResponse.text || "";
-	const suggestions = parseSuggestions(suggestionsText);
+  const suggestionsText = aiResponse.text || "[]";
+  let suggestions: Suggestion[] = [];
 
-	return {
-		query,
-		recipient,
-		suggestions,
-		raw: suggestionsText,
-	};
+  try {
+    suggestions = JSON.parse(suggestionsText) as Suggestion[];
+  } catch (e) {
+    console.error("Failed to parse AI response:", e);
+    // Fallback to empty array or single error item
+    suggestions = [
+      {
+        searchQuery: "Error parsing suggestions",
+        description: "Please try again",
+        category: "error",
+      },
+    ];
+  }
+
+  return {
+    query,
+    recipient,
+    suggestions,
+    raw: suggestionsText,
+  };
 }
