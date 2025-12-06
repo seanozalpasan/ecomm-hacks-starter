@@ -97,6 +97,7 @@ Jumbos
 - Winston Hsiao
 - Sean
 - Steven
+- Shane
 
 ### Demo
 
@@ -119,7 +120,7 @@ Jumbos
 
 ### Tech Stack
 
-- **Frontend:** [e.g., Next.js, React, etc.]
+- **Frontend:** Next.js, React
 - **Backend:** [e.g., Node.js, Python, etc.]
 - **Models:** Nano Banana Pro, Gemini 3 Pro
 - **Other:** [any other notable tech]
