@@ -14,7 +14,7 @@ export default async function DashboardPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-white">
+		<div className=" bg-white">
 			{/* Header */}
 			<header className="flex justify-between items-center p-4">
 				<Logo />

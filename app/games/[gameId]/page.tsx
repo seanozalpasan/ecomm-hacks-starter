@@ -3,14 +3,14 @@
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import CircularUserImages from "@/components/circular-user-images";
 import { Button } from "@/components/ui/button";
 
 interface GamePageProps {
-	params: {
+	params: Promise<{
 		gameId: string;
-	};
+	}>;
 }
 
 interface GameData {
@@ -87,7 +87,7 @@ const BLANK_AVATAR =
 	'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cbd5e1"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/%3E%3C/svg%3E';
 
 export default function IndividualGamePage({ params }: GamePageProps) {
-	const { gameId } = params;
+	const { gameId } = React.use(params);
 	const router = useRouter();
 	const { user, isLoaded } = useUser();
 	const [userImages, setUserImages] = useState<Map<string, string>>(new Map());
@@ -123,7 +123,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
 	if (!isLoaded || isLoading) {
 		return (
-			<div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+			<div className=" bg-zinc-50 dark:bg-black flex items-center justify-center">
 				<p className="text-muted-foreground">Loading game details...</p>
 			</div>
 		);
@@ -131,7 +131,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
 	if (error || !gameData) {
 		return (
-			<div className="min-h-screen bg-zinc-50 dark:bg-black flex flex-col items-center justify-center p-4">
+			<div className=" bg-zinc-50 dark:bg-black flex flex-col items-center justify-center p-4">
 				<h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
 					Game not found
 				</h1>
@@ -180,7 +180,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 	};
 
 	return (
-		<div className="min-h-screen dark:bg-black">
+		<div className=" dark:bg-black">
 			<main className="max-w-3xl mx-auto px-4 py-8 sm:py-16">
 				<div className="text-center mb-8 space-y-2">
 					<h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">

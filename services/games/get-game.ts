@@ -7,6 +7,7 @@ export async function getGameDetails(gameId: string) {
 	const game = await db
 		.select({
 			id: games.id,
+			name: games.name,
 			priceLimit: games.priceLimit,
 			deadline: games.deadline,
 			categories: games.categories,

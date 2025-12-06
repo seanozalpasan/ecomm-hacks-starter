@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Crown, Mail, Minus, Users } from "lucide-react";
 import { motion } from "motion/react";
@@ -97,29 +97,26 @@ function HomeContent() {
 	}, [searchParams]);
 
 	return (
-		<div className="min-h-screen bg-white dark:bg-zinc-900">
+		<div className=" bg-white dark:bg-zinc-900">
 			<div className="container mx-auto px-4 py-8">
 				<SignedOut>
-					<Navbar />
+					<div className="max-w-4xl mx-auto flex gap-4 flex-col mt-20">
+						<Logo size={128} />
+						<h1 className="text-5xl font-bold">Unwrappd</h1>
+						<p className="text-gray-500">
+							Most Secret Santa apps just give you a name. Unwrappd gives you a
+							plan. Our intelligent AI Santa handles the logistics and scans the
+							web to find unique, personalized gifts based on each user's
+							specific vibe. <br />
+							<br />
+							We bridge the gap between knowing who to buy for and knowing what
+							to buy. By integrating AI directly with unique sellers, we ensure
+							every gift is a hit, not a generic last-minute grab.
+						</p>
 
-					<div className="max-w-md mx-auto text-center pt-12">
-						<div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-8">
-							<h2 className="text-2xl font-semibold mb-4 text-black dark:text-white">
-								Get Started
-							</h2>
-							<p className="text-gray-600 dark:text-gray-300 mb-6">
-								Sign in to create and join Secret Santa games with your friends
-								and family.
-							</p>
-							<div className="flex flex-col gap-3">
-								<Button asChild size="lg" className="w-full">
-									<Link href="/sign-in">Sign In</Link>
-								</Button>
-								<Button asChild variant="outline" size="lg" className="w-full">
-									<Link href="/sign-up">Sign Up</Link>
-								</Button>
-							</div>
-						</div>
+						<Button asChild size="lg" className="w-full">
+							<Link href="/sign-in">Sign In</Link>
+						</Button>
 					</div>
 				</SignedOut>
 

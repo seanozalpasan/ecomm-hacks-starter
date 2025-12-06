@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const ai = new GoogleGenAI({
 	apiKey: process.env.GEMINI_API_KEY,
@@ -9,6 +9,17 @@ export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ inviteId: string }> },
 ) {
+	type CandidatePart = {
+		text?: string;
+		inlineData?: { data?: string; mimeType?: string };
+		inline_data?: { data?: string; mime_type?: string };
+	};
+	type Candidate = {
+		content?: {
+			parts?: CandidatePart[];
+		};
+	};
+
 	try {
 		if (!process.env.GEMINI_API_KEY) {
 			return NextResponse.json(
@@ -20,28 +31,62 @@ export async function GET(
 		const { inviteId } = await params;
 
 		// Fetch invite details to personalize the postcard
+		const origin =
+			request.headers.get("origin") ||
+			`${request.nextUrl.protocol}//${request.nextUrl.host}`;
 		const inviteResponse = await fetch(
-			`${request.nextUrl.origin}/api/games/invite/${inviteId}`,
+			`${origin}/api/games/invite/${inviteId}`,
+			{
+				headers: {
+					accept: "application/json",
+				},
+			},
 		);
 
 		if (!inviteResponse.ok) {
+			const text = await inviteResponse.text();
+			console.error("Failed to fetch invite details:", {
+				status: inviteResponse.status,
+				text: text.slice(0, 500),
+			});
 			return NextResponse.json(
-				{ error: "Failed to fetch invite details" },
+				{
+					error: "Failed to fetch invite details",
+					status: inviteResponse.status,
+					body: text.slice(0, 500),
+				},
 				{ status: 404 },
 			);
 		}
 
-		const inviteData = await inviteResponse.json();
+		const inviteText = await inviteResponse.text();
+		type InviteApiResponse = {
+			data: {
+				id: string;
+				email: string;
+				status: string;
+				game: {
+					name: string | null;
+					priceLimit: string | null;
+					deadline: string;
+					author: {
+						name: string;
+						clerkId: string;
+					};
+				};
+			};
+		};
+		let inviteData: InviteApiResponse;
+		try {
+			inviteData = JSON.parse(inviteText) as InviteApiResponse;
+		} catch {
+			console.error("Invite response not JSON:", inviteText.slice(0, 500));
+			throw new Error("Invite API returned non-JSON response");
+		}
+
 		const invite = inviteData.data;
 
 		const gameName = invite.game.name || "Secret Santa";
-		const authorName = invite.game.author.name;
-		const deadline = new Date(invite.game.deadline);
-		const formattedDeadline = deadline.toLocaleDateString("en-US", {
-			month: "long",
-			day: "numeric",
-		});
-
 		// Create a personalized Christmas postcard prompt
 		const prompt = `Create a beautiful, festive Christmas postcard image for a Secret Santa gift exchange invitation. The postcard should feature:
 
@@ -55,8 +100,18 @@ export async function GET(
 The image should be suitable for a digital invitation card, with a 16:9 aspect ratio, warm color palette, and clear, readable text.`;
 
 		// Generate image using Nano Banana / Gemini image-capable model
-		const response = await ai.models.generateContent({
-			model: "gemini-2.0-flash-exp", // image-capable
+		interface GenerateContentResponse {
+			candidates?: Array<{
+				content?: { parts?: CandidatePart[] };
+				error?: { message?: string };
+			}>;
+			error?: { message?: string };
+			text?: string;
+			image?: string;
+		}
+
+		const response = (await ai.models.generateContent({
+			model: "gemini-2.5-flash-image", // image-capable (matches combine route)
 			contents: [
 				{
 					role: "user",
@@ -66,49 +121,42 @@ The image should be suitable for a digital invitation card, with a 16:9 aspect r
 			config: {
 				responseModalities: ["IMAGE"],
 			},
-		});
+		})) as GenerateContentResponse;
 
-		if ((response as any).error) {
-			throw new Error((response as any).error.message || "Gemini error");
+		if (response.error) {
+			throw new Error(response.error.message || "Gemini error");
 		}
 
-		// Extract image data from response
-		// The response structure for image generation may differ from text generation
+		// Extract image data from response (mirrors combine route)
 		let imageData: string | null = null;
 		let mimeType = "image/png";
 
-		// Try to extract image from various possible response structures
-		const candidates = (response as any).candidates || [];
+		const candidates: Candidate[] = response.candidates ?? [];
 		if (candidates.length > 0) {
-			const parts = candidates[0]?.content?.parts || [];
+			const parts = (candidates[0]?.content?.parts || []) as CandidatePart[];
 			for (const part of parts) {
-				// Check for inlineData (camelCase)
+				if (part.text) {
+					console.log("AI text response:", part.text);
+				}
 				if (part.inlineData?.data) {
-					imageData = part.inlineData.data;
+					imageData = part.inlineData.data || null;
 					mimeType = part.inlineData.mimeType || mimeType;
 					break;
 				}
-				// Check for inline_data (snake_case)
 				if (part.inline_data?.data) {
-					imageData = part.inline_data.data;
-					mimeType = part.inline_data.mime_type || mimeType;
+					const inlineData = part.inline_data;
+					imageData = inlineData.data || null;
+					mimeType = inlineData.mime_type || mimeType;
 					break;
 				}
 			}
 		}
 
-		// Fallback: check if response has direct image property
-		if (!imageData && (response as any).image) {
-			imageData = (response as any).image;
-		}
-
-		// Fallback: check response.text for base64 (some APIs return it as text)
-		if (!imageData && (response as any).text) {
-			imageData = (response as any).text;
-		}
-
 		if (!imageData) {
-			console.error("Unexpected response structure:", JSON.stringify(response, null, 2));
+			console.error(
+				"Unexpected response structure:",
+				JSON.stringify(response, null, 2),
+			);
 			throw new Error("Failed to extract image data from response");
 		}
 
@@ -136,4 +184,3 @@ The image should be suitable for a digital invitation card, with a 16:9 aspect r
 		);
 	}
 }
-
