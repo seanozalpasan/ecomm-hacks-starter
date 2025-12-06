@@ -61,7 +61,7 @@ export default function LikesPage() {
 				<button
 					type="button"
 					onClick={() => router.push("/onboarding/basics")}
-					className="px-6 py-2 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+					className="px-6 py-2 bg-zinc-900 dark: text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
 				>
 					Go to Basics
 				</button>
@@ -146,7 +146,7 @@ export default function LikesPage() {
 					<button
 						type="submit"
 						disabled={isPending}
-						className="px-6 py-2 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-6 py-2 bg-zinc-900 dark: text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{isPending ? "Saving..." : step === 3 ? "Complete" : "Next"}
 					</button>

@@ -592,7 +592,7 @@ export async function enrichProductsWithFirecrawl(
   products: ProductResult[],
   options?: { priceLimit?: number },
 ): Promise<ProductResult[]> {
-  const maxItems = products.slice(0, 6);
+  const maxItems = products.slice(0, 3);
 
   if (!firecrawlClient) {
     return options?.priceLimit
@@ -669,7 +669,7 @@ export async function findProductsFromQueries(
     try {
       const result = await exa.search(q.searchQuery, {
         type: "auto",
-        numResults: 2, // Get 2 results per query bucket for diverse categories
+        numResults: 1, // Get 1 result per query bucket to limit total products
         excludeDomains: [
           "reddit.com",
           "quora.com",

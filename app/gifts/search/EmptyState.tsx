@@ -22,7 +22,7 @@ export function EmptyState({ userId, gameId }: EmptyStateProps) {
 	};
 
 	return (
-		<div className="flex  items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4 py-16 sm:py-32">
+		<div className="flex  items-center justify-center  font-sans dark:bg-black px-4 py-16 sm:py-32">
 			<div className="w-full max-w-2xl text-center space-y-6">
 				<h1 className="text-2xl font-semibold">
 					Missing {!gameId ? "Game" : "Gift Recipient"} Information

@@ -381,7 +381,7 @@ export default function InvitePage() {
 				</h1>
 
 				{hasResponded ? (
-					<div className="bg-zinc-50 border border-zinc-200 rounded-lg p-6 mb-6">
+					<div className=" border border-zinc-200 rounded-lg p-6 mb-6">
 						<p className="text-center text-zinc-900">
 							You have already{" "}
 							<span className="font-semibold">

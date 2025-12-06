@@ -1,11 +1,16 @@
-import { GiftSearchClient } from "@/components/gift-search-client";
+import { Suspense } from "react";
 import { getGameDetails } from "@/services/games/get-game";
 import { getUserById } from "@/services/user/query";
-
 import { EmptyState } from "./EmptyState";
+import { GiftSearchPageClient } from "./gift-search-page-client";
 
 type Props = {
-	searchParams: Promise<{ userId?: string; gameId?: string }>;
+	searchParams: Promise<{
+		userId?: string;
+		gameId?: string;
+		step?: string;
+		query?: string;
+	}>;
 };
 
 export default async function GiftsSearchPage({ searchParams }: Props) {
@@ -28,14 +33,14 @@ export default async function GiftsSearchPage({ searchParams }: Props) {
 	}
 
 	return (
-		<div className="flex  items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4 py-16 sm:py-32">
-			<div className="w-full max-w-2xl">
-				<GiftSearchClient
-					user={user}
-					gameId={game.id}
-					priceLimit={game.priceLimit}
-				/>
-			</div>
-		</div>
+		<Suspense fallback={<div>Loading...</div>}>
+			<GiftSearchPageClient
+				user={user}
+				gameId={game.id}
+				priceLimit={game.priceLimit}
+				initialStep={params.step || "search"}
+				initialQuery={params.query}
+			/>
+		</Suspense>
 	);
 }

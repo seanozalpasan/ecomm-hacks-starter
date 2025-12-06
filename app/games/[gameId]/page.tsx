@@ -2,6 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { Check, Clock, Crown, User2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import CircularUserImages from "@/components/circular-user-images";
@@ -123,7 +124,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
 	if (!isLoaded || isLoading) {
 		return (
-			<div className=" bg-zinc-50 dark:bg-black flex items-center justify-center">
+			<div className="  dark:bg-black flex items-center justify-center">
 				<p className="text-muted-foreground">Loading game details...</p>
 			</div>
 		);
@@ -131,7 +132,7 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
 	if (error || !gameData) {
 		return (
-			<div className=" bg-zinc-50 dark:bg-black flex flex-col items-center justify-center p-4">
+			<div className="  dark:bg-black flex flex-col items-center justify-center p-4">
 				<h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
 					Game not found
 				</h1>
@@ -154,19 +155,47 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 		(p) => p.userId !== gameData.authorId,
 	);
 
-	const pendingCount = (gameData.invites || []).filter(
+	const pendingInvites = (gameData.invites || []).filter(
 		(i) => i.status === "PENDING",
-	).length;
+	);
+	const pendingCount = pendingInvites.length;
 
 	// Prepare users for circular display with Clerk images or blank avatar
+	// Include pending invites as grey placeholders
 	const circularUsers = [
 		{
 			userImage: userImages.get(gameData.authorClerkId) || BLANK_AVATAR,
 			id: gameData.authorId,
+			isPlaceholder: false,
 		},
 		...acceptedParticipants.map((p) => ({
 			userImage: userImages.get(p.clerkId) || BLANK_AVATAR,
 			id: p.userId,
+			isPlaceholder: false,
+		})),
+		...pendingInvites.map((invite) => ({
+			userImage: BLANK_AVATAR,
+			id: `pending-${invite.id}`,
+			isPlaceholder: true,
+		})),
+	];
+
+	// Build a unified people list for display
+	const allPeople = [
+		{
+			name: gameData.authorName,
+			email: "",
+			status: "host" as const,
+		},
+		...acceptedParticipants.map((p) => ({
+			name: p.name,
+			email: p.email,
+			status: "accepted" as const,
+		})),
+		...pendingInvites.map((invite) => ({
+			name: invite.email,
+			email: invite.email,
+			status: "pending" as const,
 		})),
 	];
 
@@ -194,14 +223,75 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 				</div>
 
 				{/* Circular Avatars */}
-				<div className="mb-12">
+				<div className="mb-8">
 					<CircularUserImages users={circularUsers} size={80} radius={150} />
 					{pendingCount > 0 && (
 						<p className="text-center text-muted-foreground mt-4">
 							{pendingCount} {pendingCount === 1 ? "person" : "people"} still
-							pending...
+							pending…
 						</p>
 					)}
+				</div>
+
+				{/* People List */}
+				<div className="mb-8">
+					<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+						People ({allPeople.length})
+					</h2>
+					<ul className="space-y-2">
+						{allPeople.map((person, index) => (
+							<li
+								key={`${person.email || person.name}-${index}`}
+								className="flex items-center gap-3 rounded-xl bg-gray-100 dark:bg-zinc-800 px-4 py-3"
+							>
+								<span className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-zinc-700 text-gray-600 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-zinc-600">
+									{person.status === "host" ? (
+										<Crown className="h-5 w-5 text-amber-500" />
+									) : (
+										<User2 className="h-5 w-5" />
+									)}
+								</span>
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+										{person.name}
+									</p>
+									{person.email && person.status !== "host" && (
+										<p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+											{person.email}
+										</p>
+									)}
+								</div>
+								<span
+									className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+										person.status === "host"
+											? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+											: person.status === "accepted"
+												? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+												: "bg-gray-200 text-gray-600 dark:bg-zinc-700 dark:text-gray-400"
+									}`}
+								>
+									{person.status === "host" && (
+										<>
+											<Crown className="h-3 w-3" />
+											Host
+										</>
+									)}
+									{person.status === "accepted" && (
+										<>
+											<Check className="h-3 w-3" />
+											Joined
+										</>
+									)}
+									{person.status === "pending" && (
+										<>
+											<Clock className="h-3 w-3" />
+											Pending
+										</>
+									)}
+								</span>
+							</li>
+						))}
+					</ul>
 				</div>
 
 				{/* Game Details */}

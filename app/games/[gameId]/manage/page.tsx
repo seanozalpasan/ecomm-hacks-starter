@@ -34,6 +34,7 @@ interface GameData {
 	authorId: string;
 	authorClerkId: string;
 	authorName: string;
+	name: string;
 	participants: Array<{
 		userId: string;
 		name: string;
@@ -171,7 +172,7 @@ export default function ManageGamePage({ params }: ManagePageProps) {
 
 	if (!isLoaded || isLoading) {
 		return (
-			<div className=" bg-zinc-50 dark:bg-black flex items-center justify-center">
+			<div className="  dark:bg-black flex items-center justify-center">
 				<p className="text-muted-foreground">Loading game details...</p>
 			</div>
 		);
@@ -179,7 +180,7 @@ export default function ManageGamePage({ params }: ManagePageProps) {
 
 	if (error || !gameData) {
 		return (
-			<div className=" bg-zinc-50 dark:bg-black flex flex-col items-center justify-center p-4">
+			<div className="  dark:bg-black flex flex-col items-center justify-center p-4">
 				<h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
 					Game not found
 				</h1>
@@ -236,25 +237,6 @@ export default function ManageGamePage({ params }: ManagePageProps) {
 
 	return (
 		<div className=" bg-white text-gray-900">
-			<header className="max-w-5xl mx-auto flex items-center justify-between px-6 pt-8">
-				<button
-					onClick={() => router.push(`/games/${gameId}`)}
-					className="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
-				>
-					<Logo />
-					<span className="text-gray-700">Back to game</span>
-				</button>
-				<div className="flex items-center gap-3">
-					<div className="text-right">
-						<p className="text-sm font-semibold">{user?.fullName || "You"}</p>
-						<p className="text-xs text-gray-500">
-							{user?.primaryEmailAddress?.emailAddress || "Host"}
-						</p>
-					</div>
-					<UserButton />
-				</div>
-			</header>
-
 			<main className="max-w-5xl mx-auto px-6 pb-16 pt-6 space-y-10">
 				<section className="space-y-4">
 					<div className="space-y-3">

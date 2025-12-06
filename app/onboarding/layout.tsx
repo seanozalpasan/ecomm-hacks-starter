@@ -44,7 +44,7 @@ export default function OnboardingLayout({
 									className={cn(
 										"w-10 h-10 rounded-full font-semibold",
 										isActive &&
-											"bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 scale-110",
+											"bg-zinc-900 text-white dark: dark:text-zinc-900 scale-110",
 										isCompleted &&
 											"bg-zinc-700 text-white dark:bg-zinc-600 dark:text-zinc-50",
 										!isActive &&

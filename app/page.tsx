@@ -4,6 +4,7 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Crown, Mail, Minus, Users } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -102,7 +103,12 @@ function HomeContent() {
 				<SignedOut>
 					<div className="max-w-4xl mx-auto flex gap-4 flex-col mt-20">
 						<Logo size={128} />
-						<h1 className="text-5xl font-bold">Unwrappd</h1>
+						<Image
+							src="/unwrappd-text.svg"
+							alt="Unwrapped"
+							width={300}
+							height={128}
+						/>
 						<p className="text-gray-500">
 							Most Secret Santa apps just give you a name. Unwrappd gives you a
 							plan. Our intelligent AI Santa handles the logistics and scans the

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 interface User {
 	userImage: string;
 	id?: string | number;
+	isPlaceholder?: boolean;
 }
 
 interface CircularUserImagesProps {
@@ -61,32 +62,39 @@ function UserImage({
 				damping: 30,
 			}}
 		>
-			<div className="relative w-full h-full overflow-hidden rounded-lg shadow-lg">
-				{/* Blurred placeholder */}
-				{!imageLoaded && (
-					<motion.div
-						initial={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						transition={{ duration: 0.2 }}
-						className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 blur-sm"
-					/>
+			<div className="relative w-full h-full overflow-hidden rounded-xl shadow-lg">
+				{user.isPlaceholder ? (
+					/* Grey placeholder block for pending invites */
+					<div className="absolute inset-0 bg-gray-200 dark:bg-zinc-700" />
+				) : (
+					<>
+						{/* Blurred placeholder */}
+						{!imageLoaded && (
+							<motion.div
+								initial={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={{ duration: 0.2 }}
+								className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 blur-sm"
+							/>
+						)}
+						{/* Actual image */}
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: imageLoaded ? 1 : 0 }}
+							transition={{ duration: 0.3 }}
+							className="absolute inset-0"
+						>
+							<Image
+								src={user.userImage}
+								alt="User avatar"
+								fill
+								className="object-cover"
+								sizes={`${size}px`}
+								onLoad={() => setImageLoaded(true)}
+							/>
+						</motion.div>
+					</>
 				)}
-				{/* Actual image */}
-				<motion.div
-					initial={{ opacity: 0 }}
-					animate={{ opacity: imageLoaded ? 1 : 0 }}
-					transition={{ duration: 0.3 }}
-					className="absolute inset-0"
-				>
-					<Image
-						src={user.userImage}
-						alt="User avatar"
-						fill
-						className="object-cover"
-						sizes={`${size}px`}
-						onLoad={() => setImageLoaded(true)}
-					/>
-				</motion.div>
 			</div>
 		</motion.div>
 	);

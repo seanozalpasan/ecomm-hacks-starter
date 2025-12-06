@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // PHASE 2: FIND ACTUAL PRODUCTS (Exa)
     // Pass the Gemini suggestions into Exa in parallel
-    // With 3 categories and 2 items per category, we get 6 diverse products
+    // With 3 categories and 1 item per category, we get 3 diverse products
     const realProducts = await findProductsFromQueries(suggestionBuckets, {
       imageLinks: 3,
     });
@@ -127,8 +127,10 @@ export async function POST(request: NextRequest) {
     });
 
     // PHASE 2.75: Enhance descriptions with Gemini (clean URLs, navigation text, etc.)
+    // Limit to exactly 3 products for the final result
+    const productsToEnhance = scrapedProducts.slice(0, 3);
     const enhancedDescriptions = await enhanceProductDescriptions(
-      scrapedProducts.map((p) => ({
+      productsToEnhance.map((p) => ({
         title: p.title,
         description: p.description,
         category: p.category,
@@ -137,11 +139,11 @@ export async function POST(request: NextRequest) {
       })),
     );
 
-    // Apply enhanced descriptions
-    const finalProducts = scrapedProducts.map((product, index) => ({
+    // Apply enhanced descriptions and ensure exactly 3 products
+    const finalProducts = productsToEnhance.map((product, index) => ({
       ...product,
       description: enhancedDescriptions[index]?.description || product.description,
-    }));
+    })).slice(0, 3);
 
     // PHASE 3: Save the suggestions to the database
     try {
@@ -165,8 +167,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<GiftSuggestionsResponse>(
       {
         context: ideationResult.recipient, // Helpful for debugging/UI
-        suggestionBuckets, // The AI's abstract ideas (limited to 6)
-        products: finalProducts, // The actual clickable links with cleaned descriptions
+        suggestionBuckets, // The AI's abstract ideas (limited to 3)
+        products: finalProducts, // The actual clickable links with cleaned descriptions (exactly 3)
       },
       { status: 200 },
     );

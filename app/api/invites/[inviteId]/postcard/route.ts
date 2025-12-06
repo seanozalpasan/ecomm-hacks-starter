@@ -111,7 +111,7 @@ The image should be suitable for a digital invitation card, with a 16:9 aspect r
 		}
 
 		const response = (await ai.models.generateContent({
-			model: "gemini-2.5-flash-image", // image-capable (matches combine route)
+			model: "gemini-3-pro-image-preview", // image-capable (matches combine route)
 			contents: [
 				{
 					role: "user",
