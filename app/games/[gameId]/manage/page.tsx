@@ -34,7 +34,6 @@ interface GameData {
 	authorId: string;
 	authorClerkId: string;
 	authorName: string;
-	name: string;
 	participants: Array<{
 		userId: string;
 		name: string;
