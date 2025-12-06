@@ -1,6 +1,19 @@
 "use client";
 
-import { X } from "lucide-react";
+import {
+	X,
+	Film,
+	Gamepad2,
+	Music,
+	Trophy,
+	Palette,
+	ShoppingBag,
+	Coffee,
+	Laptop,
+	Sparkles,
+	Gift,
+	Heart,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,13 +25,14 @@ const PILL_STYLES = {
 	unselected:
 		"bg-white border-2 border-red-200 text-gray-700 hover:border-red-400 hover:bg-red-50 transition-all duration-200",
 	selected:
-		"bg-gradient-to-r from-red-600 to-green-600 text-white border-2 border-red-700 shadow-lg",
+		"bg-red-500 text-white border-2 border-red-700 shadow-lg",
 };
 
 // Interest categories with specific trending examples
 const INTEREST_CATEGORIES = [
 	{
-		title: "🎬 Movies & TV",
+		title: "Movies & TV",
+		icon: Film,
 		interests: [
 			"Star Wars",
 			"Marvel",
@@ -33,7 +47,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "🎮 Gaming",
+		title: "Gaming",
+		icon: Gamepad2,
 		interests: [
 			"Fortnite",
 			"Minecraft",
@@ -48,7 +63,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "🎵 Music Artists",
+		title: "Music Artists",
+		icon: Music,
 		interests: [
 			"Taylor Swift",
 			"Sabrina Carpenter",
@@ -63,7 +79,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "⚽ Sports",
+		title: "Sports",
+		icon: Trophy,
 		interests: [
 			"Soccer",
 			"Football",
@@ -78,7 +95,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "🎨 Hobbies",
+		title: "Hobbies",
+		icon: Palette,
 		interests: [
 			"Photography",
 			"Cooking",
@@ -93,7 +111,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "🛍️ Fashion & Style",
+		title: "Fashion & Style",
+		icon: ShoppingBag,
 		interests: [
 			"Nike",
 			"Adidas",
@@ -108,7 +127,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "☕ Food & Drink",
+		title: "Food & Drink",
+		icon: Coffee,
 		interests: [
 			"Coffee",
 			"Wine",
@@ -123,7 +143,8 @@ const INTEREST_CATEGORIES = [
 		],
 	},
 	{
-		title: "💻 Tech & Gadgets",
+		title: "Tech & Gadgets",
+		icon: Laptop,
 		interests: [
 			"iPhone",
 			"PlayStation",
@@ -267,7 +288,7 @@ export default function InterestsPage() {
 	const totalSelections = selectedInterests.length + customInterests.length;
 
 	return (
-		<div className=" bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
+		<div className="min-h-screen bg-white dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
 			<div className="w-full">
 				{/* Header */}
 				<motion.div
