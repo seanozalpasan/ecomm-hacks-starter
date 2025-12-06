@@ -37,6 +37,7 @@ export type CompleteOnboardingInput = {
 				favoriteHobby: string;
 				favoriteGift: string;
 		  };
+	interests?: string[];
 };
 
 type OnboardingDeps = {
@@ -68,10 +69,14 @@ function calculateAge(birthday: Date) {
 	return age;
 }
 
-function buildGiftPreferences(likes: LikesInput) {
-	return [likes.favoriteColor, likes.favoriteHobby, likes.favoriteGift].filter(
+function buildGiftPreferences(likes: LikesInput, interests?: string[]) {
+	const likesArray = [likes.favoriteColor, likes.favoriteHobby, likes.favoriteGift].filter(
 		Boolean,
 	);
+	const interestsArray = interests || [];
+
+	// Merge interests first, then likes (interests are primary)
+	return [...interestsArray, ...likesArray];
 }
 
 function getDb(dbClient?: OnboardingDbClient): OnboardingDbClient {
@@ -95,6 +100,7 @@ function buildUserData(
 	basics: BasicsInput,
 	likes: LikesInput,
 	email: string,
+	interests?: string[],
 ): {
 	email: string;
 	age: number;
@@ -107,7 +113,7 @@ function buildUserData(
 		age: calculateAge(basics.birthday),
 		name: basics.name,
 		location: basics.location,
-		giftPreferences: buildGiftPreferences(likes),
+		giftPreferences: buildGiftPreferences(likes, interests),
 	};
 }
 
@@ -143,14 +149,14 @@ export async function completeOnboarding(
 	input: CompleteOnboardingInput,
 	deps: OnboardingDeps = {},
 ) {
-	const { clerkId, email } = input;
+	const { clerkId, email, interests } = input;
 
 	if (!clerkId) throw new Error("Missing Clerk user id");
 	if (!email) throw new Error("Missing user email");
 
 	const basics = normalizeBasics(input.basics);
 	const likes = normalizeLikes(input.likes);
-	const updateData = buildUserData(basics, likes, email);
+	const updateData = buildUserData(basics, likes, email, interests);
 
 	const dbClient = getDb(deps.dbClient);
 	const existing = await findUserByClerkId(dbClient, clerkId);

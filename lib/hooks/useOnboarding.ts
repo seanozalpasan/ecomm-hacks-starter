@@ -62,6 +62,7 @@ async function submitLikes(data: LikesData) {
 		body: JSON.stringify({
 			basics: saved.basics,
 			likes: data,
+			interests: saved.interests || [],
 		}),
 	});
 
