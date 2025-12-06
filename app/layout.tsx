@@ -8,6 +8,7 @@ import {
 } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -61,6 +62,17 @@ export default function RootLayout({
 						</header>
 						{children}
 					</Providers>
+					<Toaster
+						position="bottom-right"
+						richColors
+						toastOptions={{
+							className: "font-sans",
+							style: {
+								fontFamily:
+									"var(--font-sn-pro), system-ui, -apple-system, sans-serif",
+							},
+						}}
+					/>
 				</body>
 			</html>
 		</ClerkProvider>

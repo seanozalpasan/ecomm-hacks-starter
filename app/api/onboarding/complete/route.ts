@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -24,10 +24,21 @@ const payloadSchema = z.object({
 
 export async function POST(request: NextRequest) {
 	try {
-		const { userId, sessionClaims } = await auth();
+		const { userId } = await auth();
 
 		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		// Get user email from Clerk
+		const user = await currentUser();
+		const email = user?.emailAddresses?.[0]?.emailAddress ?? "";
+
+		if (!email) {
+			return NextResponse.json(
+				{ error: "Email not found in user profile" },
+				{ status: 400 },
+			);
 		}
 
 		const body = await request.json();
@@ -39,13 +50,6 @@ export async function POST(request: NextRequest) {
 			birthday: new Date(parsed.basics.birthday),
 		});
 		likesInputSchema.parse(parsed.likes);
-
-		const email =
-			typeof sessionClaims === "object" && sessionClaims
-				? ((sessionClaims as any).email ??
-					(sessionClaims as any).email_address ??
-					"")
-				: "";
 
 		const input: CompleteOnboardingInput = {
 			clerkId: userId,
@@ -64,6 +68,8 @@ export async function POST(request: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error) {
+		console.error("Error in onboarding complete route:", error);
+
 		if (error instanceof z.ZodError) {
 			return NextResponse.json(
 				{
@@ -75,10 +81,13 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		const errorMessage =
+			error instanceof Error ? error.message : "Internal server error";
+
 		return NextResponse.json(
 			{
 				success: false,
-				error: "Internal server error",
+				error: errorMessage,
 			},
 			{ status: 500 },
 		);
