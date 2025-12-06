@@ -188,35 +188,43 @@ export default function InvitePage() {
 		});
 	}, [invite?.game?.author?.clerkId]);
 
-	// Fetch or generate postcard image
+	// Fetch postcard image (no caching - just fetch once per session)
 	useEffect(() => {
 		if (!inviteId) return;
 
-		// Check localStorage first
-		const storageKey = `postcard_${inviteId}`;
-		const storedImage = localStorage.getItem(storageKey);
+		let isMounted = true;
 
-		if (storedImage) {
-			setPostcardImage(storedImage);
-			return;
-		}
+		async function loadPostcard() {
+			try {
+				// Clean up any old localStorage entries from previous implementation
+				const oldStorageKey = `postcard_${inviteId}`;
+				try {
+					localStorage.removeItem(oldStorageKey);
+				} catch {
+					// Ignore errors from localStorage cleanup
+				}
 
-		// Generate new postcard if not in localStorage
-		setIsGeneratingPostcard(true);
-		fetchPostcardImage(inviteId)
-			.then((image) => {
-				if (image) {
-					// Store in localStorage
-					localStorage.setItem(storageKey, image);
+				setIsGeneratingPostcard(true);
+
+				const image = await fetchPostcardImage(inviteId);
+
+				if (image && isMounted) {
 					setPostcardImage(image);
 				}
-			})
-			.catch((error) => {
-				console.error("Failed to generate postcard:", error);
-			})
-			.finally(() => {
-				setIsGeneratingPostcard(false);
-			});
+			} catch (error) {
+				console.error("Failed to load postcard:", error);
+			} finally {
+				if (isMounted) {
+					setIsGeneratingPostcard(false);
+				}
+			}
+		}
+
+		loadPostcard();
+
+		return () => {
+			isMounted = false;
+		};
 	}, [inviteId]);
 
 	// Handle 404 by calling notFound()
