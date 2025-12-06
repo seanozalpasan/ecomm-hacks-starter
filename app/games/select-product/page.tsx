@@ -72,7 +72,7 @@ export default function SelectProductPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-white">
+		<div className=" bg-white">
 			<div className="container mx-auto px-4 py-8">
 				{/* Product Cards Grid */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-6xl mx-auto">

@@ -24,7 +24,7 @@ export default function CreateGameLayout({
 	);
 
 	return (
-		<div className="min-h-screen bg-white dark:bg-zinc-900">
+		<div className=" bg-white dark:bg-zinc-900">
 			<div className="container mx-auto px-4 py-8 max-w-2xl">
 				{/* Step Indicators */}
 				<div className="flex justify-between mb-12">

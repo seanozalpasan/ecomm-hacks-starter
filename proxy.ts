@@ -2,7 +2,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { hasCompletedOnboarding } from "@/services/onboarding";
 
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher([
+	"/",
+	"/sign-in(.*)",
+	"/sign-up(.*)",
+	// Allow invite flows (shareable links, postcard generation) without auth
+	"/api/games/invite(.*)",
+	"/api/invites/(.*)",
+]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
