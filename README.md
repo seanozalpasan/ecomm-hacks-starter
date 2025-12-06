@@ -4,15 +4,72 @@
   <img alt="Ecomm Hacks Banner" src="./static/lightmode.png">
 </picture>
 
-## The Challenge
+# Unwrappd
 
-Build the best ecommerce tool you can with Nano Banana Pro and Gemini 3 Pro. You have 24 hours.
+### Team Name
 
-**What you're working with:**
+Jumbos
 
-Nano Banana Pro is Google's new image generation model built on Gemini 3 Pro. It's designed for commercial use—product photography, background replacement, virtual try-on, marketing materials. It outputs up to 4K resolution and handles text in multiple languages.
+### Team Members
 
-Gemini 3 Pro is Google's most advanced reasoning model. It's multimodal (text, images, video, audio, code), has a 1M token context window, and excels at complex reasoning and agentic tasks.
+- Tika Capon
+- Winston Hsiao
+- Sean Ozalpasan
+- Shane Sidman
+
+### Demo
+
+- **Live URL:** https://unwrappd.vercel.app/
+- **Demo Video:** [YouTube/Loom link if applicable]
+
+### What We Built
+
+We built a website for groups of friends, coworkers, or family to get together and organize convenient, personalized gift giving.
+
+### How It Works
+
+We support users signing up, adding their interests, and creating or joining games with their friends. Once everyone is ready you will be assigned the person you are buying a gift for.
+
+We use Gemini 2.5 Flash for basic text completions to generate general suggestion categories/queries. Then using those gift categories/queries we use Exa's search API to get real URLs for products
+
+[Brief explanation of your architecture and how you're using Nano Banana Pro and Gemini 3 Pro]
+
+### Key Features
+
+- [Feature 1]
+- [Feature 2]
+- [Feature 3]
+
+### Tech Stack
+
+- **Frontend:** Next.js, React, Typescript
+- **Backend:** Node (Typescript) as apart of Next.js deployed on vercel
+- **Models:** Nano Banana Pro, Gemini 3 Pro, Gemini 2.5 Flash
+- **Other:** [Exa](https://exa.ai/), [Firecrawl](https://www.firecrawl.dev/)
+
+### Setup Instructions
+
+```bash
+# How to run your project locally
+pnpm install
+pnpm run dev
+```
+
+### Screenshots
+
+[Add 2-3 screenshots of your app in action]
+
+1. ...
+2. ...
+3. ...
+
+### Challenges We Faced
+
+We faced difficulties with search grounding related and properly crawling/scraping images from the product pages. Search results and grounding with real products was improved through iterations in our gift search/suggestion pipeline. Accurately scraping real product images from the URLs found was flaky.
+
+### What's Next
+
+[If you had more time, what would you add?]
 
 **Getting Access:**
 
@@ -82,68 +139,6 @@ You might make one of these more interesting by:
 - **Presentation** - You'll present your project to the group at the end of the 24 hours (5-7 minutes)
 
 ---
-
-## Your Submission
-
-**Delete the challenge brief above and fill out the sections below:**
-
-### Team Name
-
-Jumbos
-
-### Team Members
-
-- Tika Capon
-- Winston Hsiao
-- Sean
-- Steven
-- Shane
-
-### Demo
-
-- **Live URL:** [your-app.vercel.app or similar]
-- **Demo Video:** [YouTube/Loom link if applicable]
-
-### What We Built
-
-[2-3 sentence description of your tool and what problem it solves]
-
-### How It Works
-
-[Brief explanation of your architecture and how you're using Nano Banana Pro and Gemini 3 Pro]
-
-### Key Features
-
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-
-### Tech Stack
-
-- **Frontend:** Next.js, React
-- **Backend:** [e.g., Node.js, Python, etc.]
-- **Models:** Nano Banana Pro, Gemini 3 Pro
-- **Other:** [any other notable tech]
-
-### Setup Instructions
-
-```bash
-# How to run your project locally
-pnpm install
-pnpm run dev
-```
-
-### Screenshots
-
-[Add 2-3 screenshots of your app in action]
-
-### Challenges We Faced
-
-[What was hard? What did you learn?]
-
-### What's Next
-
-[If you had more time, what would you add?]
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 

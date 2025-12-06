@@ -603,29 +603,54 @@ export async function enrichProductsWithFirecrawl(
       : maxItems;
   }
 
-  const enriched: ProductResult[] = [];
+  const startTime = Date.now();
+  console.log(`Starting parallel scraping of ${maxItems.length} products...`);
 
-  for (const product of maxItems) {
+  // Process all products in parallel using Promise.allSettled
+  const scrapePromises = maxItems.map(async (product) => {
     try {
       const detailed = await scrapeProductDetails(product);
 
       const parsed = detailed.priceUsd ?? extractPriceFromText(detailed.price)?.value;
-      if (options?.priceLimit && parsed && parsed > options.priceLimit) {
-        continue;
+
+      // Filter out products without a price (likely uncrawlable)
+      if (!parsed) {
+        console.log(`Skipping product without extractable price: ${product.url}`);
+        return null;
       }
 
-      enriched.push(detailed);
+      // Check price limit if specified
+      if (options?.priceLimit && parsed > options.priceLimit) {
+        console.log(`Skipping product over price limit ($${parsed}): ${product.url}`);
+        return null;
+      }
+
+      return detailed;
     } catch (error) {
       // If non-product page detected during scraping, skip it
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage === "Non-product page detected") {
         console.log(`Skipping non-product result: ${product.url}`);
-        continue;
+        return null;
       }
-      // For other errors, include the original product
-      enriched.push(product);
+      // For other errors, skip the product (don't include uncrawlable pages)
+      console.error(`Failed to scrape product ${product.url}, excluding from results:`, errorMessage);
+      return null;
     }
-  }
+  });
+
+  // Wait for all scrapes to complete in parallel
+  const results = await Promise.allSettled(scrapePromises);
+
+  // Filter out failed promises and null results
+  const enriched = results
+    .filter((result): result is PromiseFulfilledResult<ProductResult> =>
+      result.status === 'fulfilled' && result.value !== null
+    )
+    .map(result => result.value);
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`✓ Parallel scraping completed in ${duration}s: ${enriched.length} of ${maxItems.length} products successfully enriched`);
 
   return enriched;
 }
