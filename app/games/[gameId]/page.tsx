@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, ChangeEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserButton, useUser } from '@clerk/nextjs'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import React from 'react'
-import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
+import React, { useEffect, useState } from 'react'
+import CircularUserImages from '@/components/circular-user-images'
 
 interface GamePageProps {
   params: Promise<{
@@ -24,6 +23,7 @@ interface GameData {
   authorName: string;
   participants: Array<{
     userId: string;
+    clerkId: string;
     name: string;
     email: string;
   }>;
@@ -32,6 +32,11 @@ interface GameData {
     email: string;
     status: string;
   }>;
+}
+
+interface UserImage {
+  clerkId: string;
+  imageUrl: string | null;
 }
 
 async function fetchGameData(gameId: string): Promise<GameData> {
@@ -46,113 +51,57 @@ async function fetchGameData(gameId: string): Promise<GameData> {
   return data.data;
 }
 
-async function sendInvite(gameId: string, email: string) {
-  const response = await fetch(`/api/games/${gameId}/invite`, {
+async function fetchUserImages(clerkIds: string[]): Promise<UserImage[]> {
+  const response = await fetch('/api/users/images', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ clerkIds }),
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to send invite');
+    console.error('Failed to fetch user images');
+    return [];
   }
 
-  return response.json();
+  const data = await response.json();
+  return data.users;
 }
 
-async function createMatchesForGame(gameId: string) {
-  const response = await fetch(`/api/games/${gameId}/match`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to create matches');
-  }
-
-  return response.json();
-}
+// Placeholder avatar image (blank silhouette)
+const BLANK_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cbd5e1"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/%3E%3C/svg%3E';
 
 export default function IndividualGamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const queryClient = useQueryClient();
+  const [userImages, setUserImages] = useState<Map<string, string>>(new Map());
 
   const { data: gameData, isLoading, error } = useQuery({
     queryKey: ['game', gameId],
     queryFn: () => fetchGameData(gameId),
     enabled: !!gameId && isLoaded,
+    refetchInterval: 5000, // Poll every 5 seconds for real-time updates
   });
 
-  const { mutate: invitePlayer, isPending: isInviting } = useMutation({
-    mutationFn: (email: string) => sendInvite(gameId, email),
-    onSuccess: () => {
-      toast.success('Invitation sent!', {
-        description: `Invitation email has been sent`,
-      });
-      setInviteEmail('');
-      // Refetch the game data to update the invites list
-      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
-    },
-    onError: (error) => {
-      toast.error('Failed to send invite', {
-        description: error instanceof Error ? error.message : 'Please try again later',
-      });
-    },
-  });
-
-  const { mutate: createMatches, isPending: isMatching } = useMutation({
-    mutationFn: () => createMatchesForGame(gameId),
-    onSuccess: (data) => {
-      toast.success('Matches created!', {
-        description: `${data.data.matchCount} participants have been matched`,
-      });
-      // Refetch the game data to update the status
-      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
-    },
-    onError: (error) => {
-      toast.error('Failed to create matches', {
-        description: error instanceof Error ? error.message : 'Please try again later',
-      });
-    },
-  });
-
-  const [priceLimit, setPriceLimit] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [category, setCategory] = useState('');
-  const [status, setStatus] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
-
+  // Fetch user images when game data changes
   useEffect(() => {
-    if (gameData) {
-      setPriceLimit(gameData.priceLimit || '25');
-      setDeadline(new Date(gameData.deadline).toISOString().split('T')[0]);
-      setCategory(gameData.categories?.[0] || 'General');
-      setStatus(gameData.status);
-    }
+    if (!gameData) return;
+
+    const clerkIds = [
+      gameData.authorClerkId,
+      ...gameData.participants.map(p => p.clerkId),
+    ];
+
+    fetchUserImages(clerkIds).then((images) => {
+      const imageMap = new Map<string, string>();
+      images.forEach(({ clerkId, imageUrl }) => {
+        imageMap.set(clerkId, imageUrl || BLANK_AVATAR);
+      });
+      setUserImages(imageMap);
+    });
   }, [gameData]);
-
-  const handleInvite = () => {
-    if (inviteEmail) {
-      invitePlayer(inviteEmail);
-    }
-  };
-
-  const handleMatch = () => {
-    createMatches();
-  };
-
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setter(e.target.value);
-    };
 
   if (!isLoaded || isLoading) {
     return <div className="min-h-screen bg-gray-100 p-8 text-center">Loading game details...</div>;
@@ -175,15 +124,32 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
   const isOwner = user?.id && gameData.authorClerkId === user.id;
 
-  // Filter out the host from participants and combine with pending invites
-  const allPlayers = [
-    ...(gameData.participants || [])
-      .filter(p => p.userId !== gameData.authorId)
-      .map(p => ({ name: p.name, email: p.email, status: 'Accepted' })),
-    ...(gameData.invites || [])
-      .filter(i => i.status === 'PENDING')
-      .map(i => ({ name: i.email, email: i.email, status: 'Pending' }))
+  // Filter out the host from participants (only accepted participants)
+  const acceptedParticipants = (gameData.participants || [])
+    .filter(p => p.userId !== gameData.authorId);
+
+  const pendingCount = (gameData.invites || []).filter(i => i.status === 'PENDING').length;
+
+  // Prepare users for circular display with Clerk images or blank avatar
+  const circularUsers = [
+    {
+      userImage: userImages.get(gameData.authorClerkId) || BLANK_AVATAR,
+      id: gameData.authorId
+    },
+    ...acceptedParticipants.map(p => ({
+      userImage: userImages.get(p.clerkId) || BLANK_AVATAR,
+      id: p.userId
+    }))
   ];
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -199,184 +165,104 @@ export default function IndividualGamePage({ params }: GamePageProps) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-3">
-          🎄 Secret Santa Game
-        </h1>
+      <main className="max-w-4xl mx-auto p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            🎄 Secret Santa Game
+          </h1>
+          <p className="text-gray-600">
+            {gameData.status === 'DRAFT' && 'Waiting for everyone to join...'}
+            {gameData.status === 'ACTIVE' && 'The game is active!'}
+            {gameData.status === 'COMPLETED' && 'This game has been completed'}
+          </p>
+        </div>
 
-        {isOwner && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 shadow-md">
-            <p className="font-semibold text-yellow-800">
-              You are the Owner of this game. You can manage and match players below.
+        {/* Circular Avatars */}
+        <div className="mb-12">
+          <CircularUserImages
+            users={circularUsers}
+            size={80}
+            radius={150}
+          />
+          {pendingCount > 0 && (
+            <p className="text-center text-gray-500 mt-4">
+              {pendingCount} {pendingCount === 1 ? 'person' : 'people'} still pending...
+            </p>
+          )}
+        </div>
+
+        {/* Game Details */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+          <h2 className="text-2xl font-semibold mb-6 text-center">Game Details</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">💰</span>
+              <div>
+                <p className="text-sm text-gray-500">Price Limit</p>
+                <p className="text-lg font-semibold">${gameData.priceLimit || '25'}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">📅</span>
+              <div>
+                <p className="text-sm text-gray-500">Gift Deadline</p>
+                <p className="text-lg font-semibold">{formatDate(gameData.deadline)}</p>
+              </div>
+            </div>
+
+            {gameData.categories && gameData.categories.length > 0 && (
+              <div className="flex items-center gap-3 md:col-span-2">
+                <span className="text-3xl">🎁</span>
+                <div>
+                  <p className="text-sm text-gray-500">Categories</p>
+                  <p className="text-lg font-semibold">{gameData.categories.join(', ')}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-4">
+          {isOwner && (
+            <button
+              onClick={() => router.push(`/games/${gameId}/manage`)}
+              className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-md"
+            >
+              🛠️ Manage Game
+            </button>
+          )}
+
+          {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
+            <button
+              onClick={() => router.push(`/games/${gameId}/match`)}
+              className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition shadow-md"
+            >
+              🎁 View Your Match
+            </button>
+          )}
+        </div>
+
+        {/* Status Messages */}
+        {gameData.status === 'DRAFT' && (
+          <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+            <p className="text-blue-800">
+              {isOwner
+                ? '⏳ Waiting for participants to accept their invites. You can manually start matching from the Manage Game page.'
+                : '⏳ The host is waiting for everyone to join before starting the game.'}
             </p>
           </div>
         )}
 
-        <div className="flex space-x-8">
-          <div className="w-2/5 bg-white rounded-lg shadow p-6 h-fit sticky top-8">
-            <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-                👥 Participants ({allPlayers.length})
-            </h2>
-
-            <ul className="space-y-2 mb-6 max-h-96 overflow-y-auto">
-              <li className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span className="text-gray-800">{gameData.authorName}</span>
-                <span className="text-xs text-blue-500 font-medium">Host</span>
-              </li>
-              {allPlayers.map((player, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded"
-                >
-                  <span className="text-gray-800">{player.name}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    player.status === 'Accepted'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {player.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="pt-4 border-t">
-              <h3 className="text-lg font-medium mb-3">✉️ Invite New Player</h3>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter email address"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                />
-                <button
-                  onClick={handleInvite}
-                  disabled={!inviteEmail || isInviting}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-not-allowed"
-                >
-                  {isInviting ? 'Sending...' : 'Invite'}
-                </button>
-              </div>
-            </div>
+        {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
+          <div className="mt-6 bg-green-50 border-l-4 border-green-400 p-4 rounded">
+            <p className="text-green-800">
+              ✨ Matches have been created! Click "View Your Match" above to see who you're buying for.
+            </p>
           </div>
-
-          <div className="w-3/5 space-y-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">🛠️ Game Settings</h2>
-              <div className="grid grid-cols-2 gap-4">
-
-                <div>
-                  <label htmlFor="priceLimit" className="block text-sm font-medium text-gray-700">
-                    Price Limit ($)
-                  </label>
-                  <input
-                    type="number"
-                    id="priceLimit"
-                    value={priceLimit}
-                    onChange={handleInputChange(setPriceLimit)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    disabled={!isOwner}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
-                    Gift Deadline
-                  </label>
-                  <input
-                    type="date"
-                    id="deadline"
-                    value={deadline}
-                    onChange={handleInputChange(setDeadline)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    disabled={!isOwner}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                    Gift Category
-                  </label>
-                  <select
-                    id="category"
-                    value={category}
-                    onChange={handleInputChange(setCategory)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    disabled={!isOwner}
-                  >
-                    <option>Tech</option>
-                    <option>Books</option>
-                    <option>Experiences</option>
-                    <option>General</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                    Game Status
-                  </label>
-                  <select
-                    id="status"
-                    value={status}
-                    onChange={handleInputChange(setStatus)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    disabled={!isOwner}
-                  >
-                    <option>DRAFT</option>
-                    <option>ACTIVE</option>
-                    <option>MATCHED</option>
-                    <option>COMPLETED</option>
-                  </select>
-                </div>
-
-              </div>
-              <button
-                  onClick={() => toast.success('Settings Saved!', {
-                    description: 'Frontend only',
-                  })}
-                  disabled={!isOwner}
-                  className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-blue-400"
-              >
-                  Save Settings
-              </button>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">🎁 Ready to Match?</h2>
-              <p className="text-gray-600 mb-4">
-                Once all players have joined, click below to match secret santas and send out assignments. This action cannot be undone!
-              </p>
-
-              <button
-                onClick={handleMatch}
-                disabled={!isOwner || gameData.status !== 'DRAFT' || isMatching}
-                className={`w-full px-6 py-3 rounded-lg font-extrabold text-white transition ${
-                  !isOwner || gameData.status !== 'DRAFT' || isMatching
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {isMatching ? 'Creating Matches...' : 'Match People and Create Groups'}
-              </button>
-
-              {(gameData.status === 'ACTIVE' || gameData.status === 'MATCHED') && (
-                  <div className="mt-4 space-y-3">
-                      <p className="text-center text-green-600 font-medium">
-                          ✓ Assignments have been created!
-                      </p>
-                      <button
-                          onClick={() => router.push(`/games/${gameId}/match`)}
-                          className="w-full px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition"
-                      >
-                          View Your Match
-                      </button>
-                  </div>
-              )}
-            </div>
-
-          </div>
-        </div>
+        )}
       </main>
     </div>
   )

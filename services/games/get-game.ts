@@ -28,6 +28,7 @@ export async function getGameDetails(gameId: string) {
 	const participants = await db
 		.select({
 			userId: users.id,
+			clerkId: users.clerkID,
 			name: users.name,
 			email: users.email,
 		})

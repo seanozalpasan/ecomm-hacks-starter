@@ -11,7 +11,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:test-match": "tsx scripts/test-matching.ts",
     "db:test-update": "tsx scripts/test-game-update.ts",
-    "db:cleanup": "tsx scripts/cleanup-test-data.ts"
+    "db:cleanup": "tsx scripts/cleanup-test-data.ts",
+    "db:migrate-name": "tsx scripts/add-game-name-column.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.0",
