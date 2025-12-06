@@ -1,59 +1,141 @@
 "use client";
 
+import { X } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
-import { X, Film, Gamepad2, Music, Trophy, Palette, ShoppingBag, Coffee, Laptop, Sparkles, Gift, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { getOnboardingData } from "@/lib/utils/storage";
 
 // Christmas candy-cane color scheme - gradient properly contained
 const PILL_STYLES = {
-	unselected: "bg-white border-2 border-red-200 text-gray-700 hover:border-red-400 hover:bg-red-50 transition-all duration-200",
-	selected: "bg-red-500 text-white border-2 border-red-700 shadow-lg",
+	unselected:
+		"bg-white border-2 border-red-200 text-gray-700 hover:border-red-400 hover:bg-red-50 transition-all duration-200",
+	selected:
+		"bg-gradient-to-r from-red-600 to-green-600 text-white border-2 border-red-700 shadow-lg",
 };
 
 // Interest categories with specific trending examples
 const INTEREST_CATEGORIES = [
 	{
-		title: "Movies & TV",
-		icon: Film,
-		interests: ["Star Wars", "Marvel", "The Office", "Stranger Things", "Game of Thrones", "Breaking Bad", "Harry Potter", "Lord of the Rings", "Friends", "The Crown"],
+		title: "🎬 Movies & TV",
+		interests: [
+			"Star Wars",
+			"Marvel",
+			"The Office",
+			"Stranger Things",
+			"Game of Thrones",
+			"Breaking Bad",
+			"Harry Potter",
+			"Lord of the Rings",
+			"Friends",
+			"The Crown",
+		],
 	},
 	{
-		title: "Gaming",
-		icon: Gamepad2,
-		interests: ["Fortnite", "Minecraft", "Call of Duty", "League of Legends", "Valorant", "Roblox", "The Last of Us", "Elden Ring", "Zelda", "FIFA"],
+		title: "🎮 Gaming",
+		interests: [
+			"Fortnite",
+			"Minecraft",
+			"Call of Duty",
+			"League of Legends",
+			"Valorant",
+			"Roblox",
+			"The Last of Us",
+			"Elden Ring",
+			"Zelda",
+			"FIFA",
+		],
 	},
 	{
-		title: "Music Artists",
-		icon: Music,
-		interests: ["Taylor Swift", "Sabrina Carpenter", "Future", "Drake", "The Weeknd", "Billie Eilish", "Bad Bunny", "SZA", "Olivia Rodrigo", "Travis Scott"],
+		title: "🎵 Music Artists",
+		interests: [
+			"Taylor Swift",
+			"Sabrina Carpenter",
+			"Future",
+			"Drake",
+			"The Weeknd",
+			"Billie Eilish",
+			"Bad Bunny",
+			"SZA",
+			"Olivia Rodrigo",
+			"Travis Scott",
+		],
 	},
 	{
-		title: "Sports",
-		icon: Trophy,
-		interests: ["Soccer", "Football", "Basketball", "Baseball", "Tennis", "Golf", "Formula 1", "UFC", "Hockey", "Volleyball"],
+		title: "⚽ Sports",
+		interests: [
+			"Soccer",
+			"Football",
+			"Basketball",
+			"Baseball",
+			"Tennis",
+			"Golf",
+			"Formula 1",
+			"UFC",
+			"Hockey",
+			"Volleyball",
+		],
 	},
 	{
-		title: "Hobbies",
-		icon: Palette,
-		interests: ["Photography", "Cooking", "Baking", "Gardening", "Painting", "Reading", "Yoga", "Hiking", "Crafting", "Knitting"],
+		title: "🎨 Hobbies",
+		interests: [
+			"Photography",
+			"Cooking",
+			"Baking",
+			"Gardening",
+			"Painting",
+			"Reading",
+			"Yoga",
+			"Hiking",
+			"Crafting",
+			"Knitting",
+		],
 	},
 	{
-		title: "Fashion & Style",
-		icon: ShoppingBag,
-		interests: ["Nike", "Adidas", "Vintage Clothing", "Sneakers", "Jewelry", "Streetwear", "Luxury Brands", "Thrifting", "Watches", "Accessories"],
+		title: "🛍️ Fashion & Style",
+		interests: [
+			"Nike",
+			"Adidas",
+			"Vintage Clothing",
+			"Sneakers",
+			"Jewelry",
+			"Streetwear",
+			"Luxury Brands",
+			"Thrifting",
+			"Watches",
+			"Accessories",
+		],
 	},
 	{
-		title: "Food & Drink",
-		icon: Coffee,
-		interests: ["Coffee", "Wine", "Craft Beer", "Sushi", "Pizza", "Chocolate", "Boba Tea", "Italian Food", "Mexican Food", "Vegan Food"],
+		title: "☕ Food & Drink",
+		interests: [
+			"Coffee",
+			"Wine",
+			"Craft Beer",
+			"Sushi",
+			"Pizza",
+			"Chocolate",
+			"Boba Tea",
+			"Italian Food",
+			"Mexican Food",
+			"Vegan Food",
+		],
 	},
 	{
-		title: "Tech & Gadgets",
-		icon: Laptop,
-		interests: ["iPhone", "PlayStation", "Nintendo Switch", "MacBook", "AirPods", "Smart Home", "Drones", "VR Headsets", "Cameras", "Mechanical Keyboards"],
+		title: "💻 Tech & Gadgets",
+		interests: [
+			"iPhone",
+			"PlayStation",
+			"Nintendo Switch",
+			"MacBook",
+			"AirPods",
+			"Smart Home",
+			"Drones",
+			"VR Headsets",
+			"Cameras",
+			"Mechanical Keyboards",
+		],
 	},
 ];
 
@@ -140,8 +222,12 @@ export default function InterestsPage() {
 
 		// Check for duplicates in both selected interests and custom interests
 		const isDuplicate =
-			selectedInterests.some(interest => interest.toLowerCase() === trimmedInput.toLowerCase()) ||
-			customInterests.some(interest => interest.toLowerCase() === trimmedInput.toLowerCase());
+			selectedInterests.some(
+				(interest) => interest.toLowerCase() === trimmedInput.toLowerCase(),
+			) ||
+			customInterests.some(
+				(interest) => interest.toLowerCase() === trimmedInput.toLowerCase(),
+			);
 
 		if (isDuplicate) {
 			alert("This interest has already been added!");
@@ -167,10 +253,13 @@ export default function InterestsPage() {
 
 		// Save to localStorage
 		const existingData = JSON.parse(localStorage.getItem("onboarding") || "{}");
-		localStorage.setItem("onboarding", JSON.stringify({
-			...existingData,
-			interests: totalSelections,
-		}));
+		localStorage.setItem(
+			"onboarding",
+			JSON.stringify({
+				...existingData,
+				interests: totalSelections,
+			}),
+		);
 
 		router.push("/onboarding/basics");
 	};
@@ -178,7 +267,7 @@ export default function InterestsPage() {
 	const totalSelections = selectedInterests.length + customInterests.length;
 
 	return (
-		<div className="min-h-screen bg-white dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
+		<div className=" bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-red-950 dark:via-zinc-900 dark:to-green-950 py-8">
 			<div className="w-full">
 				{/* Header */}
 				<motion.div
@@ -192,10 +281,13 @@ export default function InterestsPage() {
 						<Heart className="w-10 h-10" />
 					</h1>
 					<p className="text-gray-600 dark:text-gray-300">
-						Select at least 3 interests to help us personalize your Secret Santa experience
+						Select at least 3 interests to help us personalize your Secret Santa
+						experience
 					</p>
 					<div className="mt-4 flex justify-center gap-2 text-sm">
-						<span className={`px-3 py-1 rounded-full ${totalSelections >= 3 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+						<span
+							className={`px-3 py-1 rounded-full ${totalSelections >= 3 ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+						>
 							{totalSelections} selected
 						</span>
 						<span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -211,38 +303,38 @@ export default function InterestsPage() {
 						animate={{ opacity: 1, y: 0 }}
 						className="max-w-3xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl p-6 mb-8"
 					>
-					<h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
-						Don't see what you're looking for? Add your own!
-					</h3>
-					<div className="flex gap-3">
-						<div className="flex-1 relative">
-							<input
-								type="text"
-								value={customInput}
-								onChange={(e) => setCustomInput(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										addCustomInterest();
-									}
-								}}
-								placeholder={placeholderText}
-								disabled={customInterests.length >= 3}
-								className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-							/>
+						<h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+							Don't see what you're looking for? Add your own!
+						</h3>
+						<div className="flex gap-3">
+							<div className="flex-1 relative">
+								<input
+									type="text"
+									value={customInput}
+									onChange={(e) => setCustomInput(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											addCustomInterest();
+										}
+									}}
+									placeholder={placeholderText}
+									disabled={customInterests.length >= 3}
+									className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+								/>
+							</div>
+							<button
+								onClick={addCustomInterest}
+								disabled={!customInput.trim() || customInterests.length >= 3}
+								className="px-8 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+							>
+								Add
+							</button>
 						</div>
-						<button
-							onClick={addCustomInterest}
-							disabled={!customInput.trim() || customInterests.length >= 3}
-							className="px-8 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-						>
-							Add
-						</button>
-					</div>
-					{customInterests.length >= 3 && (
-						<p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-							Maximum 3 custom interests reached
-						</p>
-					)}
+						{customInterests.length >= 3 && (
+							<p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+								Maximum 3 custom interests reached
+							</p>
+						)}
 					</motion.div>
 				</div>
 
@@ -296,7 +388,9 @@ export default function InterestsPage() {
 											onClick={() => toggleInterest(interest)}
 											disabled={!isSelected && totalSelections >= 8}
 											className={`px-6 py-3 rounded-full font-medium ${
-												isSelected ? PILL_STYLES.selected : PILL_STYLES.unselected
+												isSelected
+													? PILL_STYLES.selected
+													: PILL_STYLES.unselected
 											} disabled:opacity-50 disabled:cursor-not-allowed`}
 										>
 											{interest}

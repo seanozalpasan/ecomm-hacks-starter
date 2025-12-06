@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function TestImageCombinePage() {
@@ -71,7 +71,10 @@ export default function TestImageCombinePage() {
 			});
 		} catch (err) {
 			toast.error("Failed to combine images", {
-				description: err instanceof Error ? err.message : "An error occurred while processing your images",
+				description:
+					err instanceof Error
+						? err.message
+						: "An error occurred while processing your images",
 			});
 		} finally {
 			setLoading(false);
@@ -87,13 +90,16 @@ export default function TestImageCombinePage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-50 py-12 px-4">
+		<div className=" bg-gray-50 py-12 px-4">
 			<div className="max-w-6xl mx-auto">
 				<h1 className="text-4xl font-bold text-center mb-8">
 					Image Combination Test
 				</h1>
 
-				<form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8 mb-8">
+				<form
+					onSubmit={handleSubmit}
+					className="bg-white rounded-lg shadow-lg p-8 mb-8"
+				>
 					<div className="grid md:grid-cols-2 gap-8 mb-8">
 						{/* Person Image Upload */}
 						<div>
