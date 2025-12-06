@@ -199,6 +199,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { type ChangeEvent, useState } from "react";
+import { toast } from "sonner";
 
 // --- Interfaces for Game Data ---
 
@@ -281,7 +282,9 @@ export function GameDropdowns() {
 		setGameName("");
 		setPlayerCount("");
 		setShowCreateGame(false);
-		alert("Game created! (Frontend only - no backend yet)");
+		toast.success("Game created!", {
+			description: "Frontend only - no backend yet",
+		});
 	};
 
 	// Type the change event for the text input

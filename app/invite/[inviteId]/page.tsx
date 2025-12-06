@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface InviteDetails {
 	id: string;
@@ -84,23 +85,34 @@ export default function InvitePage() {
 			respondToInvite(inviteId, action),
 		onSuccess: (data) => {
 			if (data.data.status === "accepted" && data.data.gameId) {
+				toast.success("Invitation accepted!", {
+					description: "Redirecting to your game...",
+				});
 				router.push(`/games/${data.data.gameId}`);
 			} else {
+				toast.success("Invitation declined");
 				router.push("/");
 			}
 		},
 		onError: (error) => {
-			alert(error instanceof Error ? error.message : "Failed to respond");
+			toast.error("Failed to respond to invitation", {
+				description:
+					error instanceof Error ? error.message : "Please try again later",
+			});
 		},
 	});
 
 	const { mutate: decline, isPending: isDeclining } = useMutation({
 		mutationFn: () => declineInvite(inviteId),
 		onSuccess: () => {
+			toast.success("Invitation declined");
 			router.push("/");
 		},
 		onError: (error) => {
-			alert(error instanceof Error ? error.message : "Failed to decline");
+			toast.error("Failed to decline invitation", {
+				description:
+					error instanceof Error ? error.message : "Please try again later",
+			});
 		},
 	});
 

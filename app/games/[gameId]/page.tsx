@@ -3,8 +3,9 @@
 import { useState, ChangeEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserButton, useUser } from '@clerk/nextjs'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import React from 'react'
+import { toast } from 'sonner'
 
 interface GamePageProps {
   params: Promise<{
@@ -45,15 +46,50 @@ async function fetchGameData(gameId: string): Promise<GameData> {
   return data.data;
 }
 
+async function sendInvite(gameId: string, email: string) {
+  const response = await fetch(`/api/games/${gameId}/invite`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to send invite');
+  }
+
+  return response.json();
+}
+
 export default function IndividualGamePage({ params }: GamePageProps) {
   const { gameId } = React.use(params);
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const queryClient = useQueryClient();
 
   const { data: gameData, isLoading, error } = useQuery({
     queryKey: ['game', gameId],
     queryFn: () => fetchGameData(gameId),
     enabled: !!gameId && isLoaded,
+  });
+
+  const { mutate: invitePlayer, isPending: isInviting } = useMutation({
+    mutationFn: (email: string) => sendInvite(gameId, email),
+    onSuccess: () => {
+      toast.success('Invitation sent!', {
+        description: `Invitation email has been sent`,
+      });
+      setInviteEmail('');
+      // Refetch the game data to update the invites list
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+    onError: (error) => {
+      toast.error('Failed to send invite', {
+        description: error instanceof Error ? error.message : 'Please try again later',
+      });
+    },
   });
 
   const [priceLimit, setPriceLimit] = useState('');
@@ -73,15 +109,15 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
   const handleInvite = () => {
     if (inviteEmail) {
-      console.log(`Inviting: ${inviteEmail} to Game ${gameId}`);
-      alert(`Invitation sent to ${inviteEmail}!`);
-      setInviteEmail('');
+      invitePlayer(inviteEmail);
     }
   };
 
   const handleMatch = () => {
     console.log(`Executing match for Game ${gameId}`);
-    alert('Matching process initiated! (Backend required)');
+    toast.success('Matching process initiated!', {
+      description: 'Backend required',
+    });
     setStatus('Matched');
   };
 
@@ -184,10 +220,10 @@ export default function IndividualGamePage({ params }: GamePageProps) {
                 />
                 <button
                   onClick={handleInvite}
-                  disabled={!inviteEmail}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-green-400"
+                  disabled={!inviteEmail || isInviting}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-not-allowed"
                 >
-                  Invite
+                  {isInviting ? 'Sending...' : 'Invite'}
                 </button>
               </div>
             </div>
@@ -264,7 +300,9 @@ export default function IndividualGamePage({ params }: GamePageProps) {
 
               </div>
               <button
-                  onClick={() => alert('Settings Saved! (Frontend only)')}
+                  onClick={() => toast.success('Settings Saved!', {
+                    description: 'Frontend only',
+                  })}
                   disabled={!isOwner}
                   className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-blue-400"
               >

@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getGameData, clearGameData } from "@/lib/utils/game-storage";
 
 interface GameData {
@@ -42,10 +43,16 @@ export default function CreateGameConfirmPage() {
 		mutationFn: createGame,
 		onSuccess: () => {
 			clearGameData();
+			toast.success("Game created successfully!", {
+				description: "Invitations have been sent to all participants",
+			});
 			router.push("/");
 		},
 		onError: (error) => {
-			alert(error instanceof Error ? error.message : "Failed to create game");
+			toast.error("Failed to create game", {
+				description:
+					error instanceof Error ? error.message : "Please try again later",
+			});
 		},
 	});
 

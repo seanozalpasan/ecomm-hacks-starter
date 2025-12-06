@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 import type z from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Field,
@@ -78,12 +79,26 @@ export default function LikesPage() {
 							if (response.ok) {
 								const result = await response.json();
 								if (result.data?.gameId) {
+									toast.success("Invitation accepted!", {
+										description: "Redirecting to your game...",
+									});
 									router.push(`/games/${result.data.gameId}`);
 									return;
 								}
+							} else {
+								const error = await response.json();
+								toast.error("Failed to accept invitation", {
+									description: error.error || "Please try again later",
+								});
 							}
 						} catch (error) {
 							console.error("Failed to auto-accept invite:", error);
+							toast.error("Failed to accept invitation", {
+								description:
+									error instanceof Error
+										? error.message
+										: "Please try again later",
+							});
 						}
 					}
 					router.push("/");

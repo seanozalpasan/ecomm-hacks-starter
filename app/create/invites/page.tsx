@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { toast } from "sonner";
 import {
 	Field,
 	FieldContent,
@@ -47,7 +48,9 @@ export default function CreateGameInvitesPage() {
 
 		// Check for duplicates
 		if (invites.includes(email)) {
-			alert("This email has already been added");
+			toast.error("Email already added", {
+				description: "This email has already been added to the invite list",
+			});
 			return;
 		}
 
@@ -65,7 +68,9 @@ export default function CreateGameInvitesPage() {
 
 	const onNext = () => {
 		if (invites.length === 0) {
-			alert("Please add at least one email");
+			toast.error("No invites added", {
+				description: "Please add at least one email to continue",
+			});
 			return;
 		}
 		router.push("/create/confirm");
