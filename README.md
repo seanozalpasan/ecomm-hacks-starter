@@ -57,9 +57,9 @@ pnpm run dev
 
 ### Screenshots
 
-[Add 2-3 screenshots of your app in action]
+![Demo](https://raw.githubusercontent.com/seanozalpasan/unwrappd/refs/heads/main/public/images/DemoImage.png)
 
-1. ...
+1.
 2. ...
 3. ...
 
