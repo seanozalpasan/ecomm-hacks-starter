@@ -2,8 +2,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { hasCompletedOnboarding } from "@/services/onboarding/check";
 
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher([
+	"/",
+	"/sign-in(.*)",
+	"/sign-up(.*)",
+	"/invite(.*)",
+]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
+const isCreateGameRoute = createRouteMatcher(["/create(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
 	const { userId } = await auth();
@@ -18,6 +24,15 @@ export default clerkMiddleware(async (auth, req) => {
 		if (completed) {
 			const url = new URL("/", req.url);
 			url.searchParams.set("onboarding_redirect", "true");
+			return NextResponse.redirect(url);
+		}
+	}
+
+	// Redirect users who haven't completed onboarding to onboarding when trying to create games
+	if (isCreateGameRoute(req) && userId) {
+		const completed = await hasCompletedOnboarding(userId);
+		if (!completed) {
+			const url = new URL("/onboarding/basics", req.url);
 			return NextResponse.redirect(url);
 		}
 	}

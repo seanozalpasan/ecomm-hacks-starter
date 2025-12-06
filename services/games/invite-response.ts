@@ -47,8 +47,11 @@ export async function respondToInvite(
 		throw new Error("Invite not found");
 	}
 
-	if (invite[0].email !== userEmail) {
-		throw new Error("This invite is not for your email address");
+	// Case-insensitive email comparison
+	if (invite[0].email.toLowerCase() !== userEmail.toLowerCase()) {
+		throw new Error(
+			`This invite is for ${invite[0].email} but you're logged in as ${userEmail}. Please log in with the invited email address.`,
+		);
 	}
 
 	if (invite[0].status !== "PENDING") {

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { use } from "react";
+import { useUser } from "@clerk/nextjs";
 
 interface InviteDetails {
 	id: string;
@@ -50,7 +50,8 @@ async function respondToInvite(inviteId: string, action: "accept" | "decline") {
 export default function InvitePage() {
 	const params = useParams();
 	const router = useRouter();
-	const inviteId = use(Promise.resolve(params.inviteId as string));
+	const { isSignedIn } = useUser();
+	const inviteId = params.inviteId as string;
 
 	const {
 		data: invite,
@@ -185,24 +186,39 @@ export default function InvitePage() {
 							)}
 						</div>
 
-						<div className="flex gap-3">
-							<button
-								type="button"
-								onClick={() => respond("decline")}
-								disabled={isPending}
-								className="flex-1 px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								{isPending ? "Processing..." : "Decline"}
-							</button>
-							<button
-								type="button"
-								onClick={() => respond("accept")}
-								disabled={isPending}
-								className="flex-1 px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								{isPending ? "Processing..." : "Accept"}
-							</button>
-						</div>
+						{!isSignedIn ? (
+							<div className="space-y-3">
+								<p className="text-sm text-center text-zinc-600 dark:text-zinc-400">
+									Please sign in to respond to this invitation
+								</p>
+								<button
+									type="button"
+									onClick={() => router.push(`/sign-in?redirect_url=/invite/${inviteId}`)}
+									className="w-full px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
+								>
+									Sign In to Respond
+								</button>
+							</div>
+						) : (
+							<div className="flex gap-3">
+								<button
+									type="button"
+									onClick={() => respond("decline")}
+									disabled={isPending}
+									className="flex-1 px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									{isPending ? "Processing..." : "Decline"}
+								</button>
+								<button
+									type="button"
+									onClick={() => respond("accept")}
+									disabled={isPending}
+									className="flex-1 px-6 py-3 bg-purple-600 dark:bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									{isPending ? "Processing..." : "Accept"}
+								</button>
+							</div>
+						)}
 					</>
 				)}
 
