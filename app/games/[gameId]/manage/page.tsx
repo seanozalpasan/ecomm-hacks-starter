@@ -26,6 +26,7 @@ interface ManagePageProps {
 
 interface GameData {
 	id: string;
+	name: string;
 	priceLimit: string | null;
 	deadline: Date;
 	categories: string[] | null;
