@@ -310,7 +310,13 @@ export default function InterestsPage() {
 				</div>
 
 				{/* Continue Button */}
-				<div className="flex justify-center pb-8 px-4">
+				<div className="flex justify-center gap-4 pb-8 px-4">
+					<button
+						onClick={() => router.push("/onboarding/basics")}
+						className="px-12 py-4 bg-white border-2 border-gray-300 text-gray-700 text-lg font-bold rounded-full hover:bg-gray-50 transition-all"
+					>
+						Back
+					</button>
 					<button
 						onClick={handleContinue}
 						disabled={totalSelections < 3}

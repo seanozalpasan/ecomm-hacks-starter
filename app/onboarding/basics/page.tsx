@@ -241,13 +241,6 @@ export default function BasicsPage() {
 
 				<div className="flex justify-end gap-4 pt-4">
 					<button
-						type="button"
-						onClick={() => router.back()}
-						className="px-6 py-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
-					>
-						Back
-					</button>
-					<button
 						type="submit"
 						disabled={isPending}
 						className="px-6 py-2 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 rounded-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
