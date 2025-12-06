@@ -2,7 +2,7 @@ import { pgTable, text, integer, uuid, timestamp, pgEnum, numeric } from 'drizzl
 import { relations } from 'drizzle-orm';
 
 // Enum for game status
-export const gameStatusEnum = pgEnum('game_status', ['CANCELLED', 'DRAFT', 'ACTIVE']);
+export const gameStatusEnum = pgEnum('game_status', ['CANCELLED', 'DRAFT', 'ACTIVE', 'COMPLETED']);
 export const inviteStatusEnum = pgEnum('invite_status', ['PENDING', 'ACCEPTED', 'DECLINED']);
 
 // Users table
