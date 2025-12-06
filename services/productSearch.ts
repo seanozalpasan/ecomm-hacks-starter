@@ -207,6 +207,61 @@ function filterProductImages(imageUrls: string[]): string[] {
   return scored.map((item) => item.url);
 }
 
+/**
+ * Validates if a URL is likely a product page and not an article/blog/guide
+ * Returns true if URL should be EXCLUDED
+ */
+function isNonProductUrl(url: string): boolean {
+  const lowerUrl = url.toLowerCase();
+
+  // Patterns that indicate non-product pages
+  const excludePatterns = [
+    /\/blog\//i,
+    /\/article\//i,
+    /\/news\//i,
+    /\/post\//i,
+    /\/story\//i,
+    /\/guide\//i,
+    /\/review\//i,
+    /\/how-to/i,
+    /\/best-/i,
+    /\/top-\d+/i,
+    /\/\d+-best/i,
+    /\/gift-guide/i,
+    /\/gift-ideas/i,
+    /\/shouts-murmurs/i,
+    /\/humor/i,
+    /\/opinion/i,
+    /\/magazine/i,
+    /\/category\//i,
+    /\/tag\//i,
+    /\/archive/i,
+    /\/about/i,
+    /\/contact/i,
+    /\/press/i,
+  ];
+
+  // Check URL path patterns
+  if (excludePatterns.some(pattern => pattern.test(lowerUrl))) {
+    return true;
+  }
+
+  // Check for article-like URL structures (year/month/day in path)
+  if (/\/\d{4}\/\d{2}\/\d{2}\//i.test(lowerUrl)) {
+    return true;
+  }
+
+  // Check for blog-style slugs (very long URLs with many hyphens)
+  const pathParts = url.split('/').filter(Boolean);
+  const lastPart = pathParts[pathParts.length - 1] || '';
+  const hyphenCount = (lastPart.match(/-/g) || []).length;
+  if (hyphenCount > 6 && lastPart.length > 50) {
+    return true;
+  }
+
+  return false;
+}
+
 function collectImages(
   product: ProductResult,
   data: any,
@@ -347,7 +402,7 @@ export async function findProductsFromQueries(
     try {
       const result = await exa.search(q.searchQuery, {
         type: "auto",
-        numResults: 2, // Get top 2 results per query bucket
+        numResults: 3, // Get top 3 results per query bucket for better filtering
         excludeDomains: [
           "reddit.com",
           "quora.com",
@@ -358,6 +413,29 @@ export async function findProductsFromQueries(
           "x.com",
           "facebook.com",
           "instagram.com",
+          "newyorker.com",
+          "medium.com",
+          "substack.com",
+          "nytimes.com",
+          "forbes.com",
+          "wired.com",
+          "theverge.com",
+          "cnet.com",
+          "techcrunch.com",
+          "mashable.com",
+          "buzzfeed.com",
+          "huffpost.com",
+          "vox.com",
+          "slate.com",
+          "theatlantic.com",
+          "washingtonpost.com",
+          "wsj.com",
+          "bloomberg.com",
+          "cnbc.com",
+          "bbc.com",
+          "cnn.com",
+          "theguardian.com",
+          "npr.org",
         ],
         contents: {
           summary: {
@@ -399,16 +477,26 @@ export async function findProductsFromQueries(
       // Map Exa results to our clean interface
       // @ts-ignore - Exa result types may vary
       return result.results.map((item: any) => {
+        // First check: Filter out non-product URLs
+        if (isNonProductUrl(item.url)) {
+          console.log(`Filtered out non-product URL: ${item.url}`);
+          return null;
+        }
+
         const productName =
           item.summary?.productName || item.title || "Unknown Product";
 
-        // Filter out "Best Of" list articles
+        // Filter out "Best Of" list articles by title
         const isList =
           /^(top|best|\d+)\s+(best|top|\d+)/i.test(productName) ||
           productName.toLowerCase().includes("best gifts") ||
-          productName.toLowerCase().includes("top gifts");
+          productName.toLowerCase().includes("top gifts") ||
+          productName.toLowerCase().includes("gift guide") ||
+          productName.toLowerCase().includes("why ") ||
+          productName.toLowerCase().includes("how to");
 
         if (isList) {
+          console.log(`Filtered out list/article by title: ${productName}`);
           return null;
         }
 

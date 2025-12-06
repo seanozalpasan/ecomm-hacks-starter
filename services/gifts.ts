@@ -54,9 +54,16 @@ Please provide 3-5 specific search query suggestions that PRIORITIZE the user's 
 
 IMPORTANT: The queries should be optimized for finding a specific product page, not blog posts or listicles.
 Bad: "Best gifts for coders"
+Bad: "Why skiing is my favorite thing"
+Bad: "Top 10 gifts for skiers"
+Bad: "Gift guide for outdoors lovers"
 Good: "Keychron K2 Mechanical Keyboard buy online"
 Good: "O'Reilly Clean Code book hardcover"
 Good: "Bose QuietComfort 45 headphones"
+Good: "Smartwool Merino wool ski socks buy"
+Good: "GoPro Hero 12 Black edition price"
+
+REQUIRED: Include purchase-intent keywords like "buy", "shop", "price", "purchase", or specific brand/model names to ensure we find actual product pages, NOT articles or blog posts.
 
 Focus on specific product names and brands when possible, while keeping the user's query "${query}" at the center of your suggestions.`;
 }

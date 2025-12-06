@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { getUserGames } from "@/services/games/get-user-games";
+import { getPendingInvites } from "@/services/games/get-pending-invites";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -9,12 +9,12 @@ export async function GET(request: NextRequest) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const games = await getUserGames(userId);
+		const invites = await getPendingInvites(userId);
 
 		return NextResponse.json(
 			{
 				success: true,
-				data: games,
+				data: invites,
 			},
 			{ status: 200 },
 		);
@@ -28,3 +28,4 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
+

@@ -26,6 +26,7 @@ CREATE TABLE "games" (
 	"deadline" timestamp NOT NULL,
 	"status" "game_status" DEFAULT 'DRAFT' NOT NULL,
 	"categories" text[]
+	"name" text,
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
